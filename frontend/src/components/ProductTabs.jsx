@@ -14,150 +14,74 @@ const categories = [
 const products = [
   {
     id: 1,
-    name: "iPhone 1616 128GB - Chính hãng VN/A",
-    price: "31,990,000đ",
-    image: "/images/products/iphone/iPhone 16 128GB - Chính hãng VN A.jpg",
+    name: "iPhone 16e 128GB - Chính hãng VN/A",
+    price: "16,390,000đ",
+    image: "/images/products/iphone/iPhone 16e 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 2,
-    name: "iPhone 16 Plus 128GB - Chính hãng VN/A",
-    price: "33,990,000đ",
-    image: "/images/products/iphone/iPhone 16 Plus 512GB - Chính hãng VN A.jpg",
+    name: "iPhone 16 128GB - Chính hãng VN/A",
+    price: "19,290,000đ",
+    image: "/images/products/iphone/iPhone 16 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 3,
-    name: "iPhone 16 Pro",
-    price: "38,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-16-pro.jpg",
+    name: "iPhone 16 Plus 128GB - Chính hãng VN/A",
+    price: "21,990,000₫",
+    image: "/images/products/iphone/iPhone 16 Plus 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 4,
-    name: "iPhone 16 Pro Max",
-    price: "42,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-16-pro-max.jpg",
+    name: "iPhone 16 Pro 128GB - Chính hãng VN/A",
+    price: "24,790,000₫",
+    image: "/images/products/iphone/iPhone 16 Pro 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 5,
-    name: "iPhone 15",
-    price: "25,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-15.jpg",
+    name: "iPhone 16 Pro Max 256GB - Chính hãng VN/A",
+    price: "30,790,000₫",
+    image:
+      "/images/products/iphone/iPhone 16 Pro Max 256GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 6,
-    name: "iPhone 15 Plus",
-    price: "28,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-15-plus.jpg",
+    name: "iPhone 15 128GB - Chính hãng VN/A",
+    price: "15,790,000₫",
+    image: "/images/products/iphone/iPhone 15 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 7,
-    name: "iPhone 14",
-    price: "21,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-14.jpg",
+    name: "iPhone 15 Plus 128GB - Chính hãng VN/A",
+    price: "18,990,000₫",
+    image: "/images/products/iphone/iPhone 15 Plus 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 8,
-    name: "iPhone 14 Plus",
-    price: "24,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-14-plus.jpg",
+    name: "iPhone 14 128GB - Chính hãng VN/A",
+    price: "12,790,000₫",
+    image: "/images/products/iphone/iPhone 14 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 9,
-    name: "iPhone 13",
-    price: "18,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/iphone-13.jpg",
+    name: "iPhone 14 Plus 128GB - Chính hãng VN/A",
+    price: "17,790,000₫",
+    image: "/images/products/iphone/iPhone 14 Plus 128GB - Chính hãng VN A.jpg",
     category: "iphone",
   },
   {
     id: 10,
-    name: "Apple Watch S10",
-    price: "12,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/apple-watch-s10.jpg",
-    category: "watch",
-  },
-  {
-    id: 11,
-    name: "Apple Watch Ultra",
-    price: "22,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/apple-watch-ultra.jpg",
-    category: "watch",
-  },
-  {
-    id: 12,
-    name: "Apple Watch S9",
-    price: "11,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/apple-watch-s9.jpg",
-    category: "watch",
-  },
-  {
-    id: 13,
-    name: "Apple Watch SE",
-    price: "8,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/apple-watch-se.jpg",
-    category: "watch",
-  },
-  {
-    id: 14,
-    name: "iPad Pro",
-    price: "29,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/ipad-pro.jpg",
-    category: "ipad",
-  },
-  {
-    id: 15,
-    name: "iPad Air M3 Mới",
-    price: "19,990,000đ",
-    image: "https://store.storeimages.cdn-apple.com/ipad-air-m3.jpg",
-    category: "ipad",
-  },
-  {
-    id: 16,
-    name: "Galaxy S25 Ultra",
-    price: "41,990,000đ",
-    image: "https://images.samsung.com/s25-ultra.jpg",
-    category: "samsung",
-  },
-  {
-    id: 17,
-    name: "Galaxy S25 Plus",
-    price: "38,990,000đ",
-    image: "https://images.samsung.com/s25-plus.jpg",
-    category: "samsung",
-  },
-  {
-    id: 18,
-    name: "Nokia HDM 105 4G",
-    price: "790,000đ",
-    image: "https://nokia.com/nokia-105-4g.jpg",
-    category: "nokia",
-  },
-  {
-    id: 19,
-    name: "Itel it9211",
-    price: "590,000đ",
-    image: "https://itel.com/itel-it9211.jpg",
-    category: "itel",
-  },
-  {
-    id: 20,
-    name: "Realme Note Series",
-    price: "8,990,000đ",
-    image: "https://realme.com/realme-note.jpg",
-    category: "realme",
-  },
-  {
-    id: 21,
-    name: "Realme C Series",
-    price: "6,990,000đ",
-    image: "https://realme.com/realme-c.jpg",
-    category: "realme",
+    name: "iPhone 13 128GB - Chính hãng VN/A",
+    price: "11,690,000₫",
+    image: "/images/products/iphone/iPhone 13 128GB - Chính Hãng VN A.jpg",
+    category: "iphone",
   },
 ];
 
@@ -195,16 +119,22 @@ export default function ProductTabs() {
           filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 bg-white cursor-pointer"
+              className="p-3 border rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-white cursor-pointer flex flex-col items-center text-center"
               onClick={() => navigate(`/product/${product.id}`)}
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-40 object-cover rounded-lg"
-              />
-              <h3 className="text-lg font-semibold mt-2">{product.name}</h3>
-              <p className="text-red-500 font-bold text-lg">{product.price}</p>
+              <div className="w-32 h-32 flex items-center justify-center">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                />
+              </div>
+              <h3 className="text-sm sm:text-base font-semibold text-wrap mt-3 line-clamp-2 h-12">
+                {product.name}
+              </h3>
+              <p className="text-red-500 font-bold text-base mt-1">
+                {product.price}
+              </p>
             </div>
           ))
         ) : (

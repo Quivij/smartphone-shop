@@ -21,8 +21,10 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-3">
           {/* Logo */}
-          <div className="w-24 flex justify-end">
-            <span className="h-12 text-lg font-bold text-gray-900">HQShop</span>
+          <div className="w-32 flex justify-end">
+            <span className="h-12 text-3xl font-bold bg-gradient-to-r from-red-500 to-yellow-400 bg-clip-text text-transparent ml-20">
+              HQShop
+            </span>
           </div>
 
           {/* Menu */}
