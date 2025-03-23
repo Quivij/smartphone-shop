@@ -1,8 +1,17 @@
+import React from "react";
+import ProductSlider from "../components/ProductSlider";
+import BannerSlider from "../components/BannerSlider";
+import ProductTabs from "../components/ProductTabs";
+
 const Home = () => {
   return (
     <div>
-      <h1>Welcome to Home Page</h1>
-      <p>This is the home page content.</p>
+      <BannerSlider />
+      <h1 className="text-2xl font-bold text-center mt-5">
+        Danh sách sản phẩm nổi bật
+      </h1>
+      <ProductSlider />
+      <ProductTabs />
     </div>
   );
 };

@@ -22,7 +22,7 @@ const Header = () => {
         <div className="flex items-center justify-between py-3">
           {/* Logo */}
           <div className="w-24 flex justify-end">
-            <img src="/images/logo.png" alt="Logo" className="h-12" />
+            <span className="h-12 text-lg font-bold text-gray-900">HQShop</span>
           </div>
 
           {/* Menu */}
@@ -307,19 +307,19 @@ const Header = () => {
                         href="#"
                         className="block px-4 py-2 hover:bg-gray-200 text-gray-800 w-full text-left font-semibold"
                         onClick={(e) =>
-                          toggleSubMenu("Samsung Galaxy S24 Series", e)
+                          toggleSubMenu("Samsung Galaxy S25 Series", e)
                         }
                       >
-                        Galaxy S24 Series ▶
+                        Galaxy S25 Series ▶
                       </a>
-                      {openSubMenu === "Samsung Galaxy S24 Series" && (
+                      {openSubMenu === "Samsung Galaxy S25 Series" && (
                         <ul className="absolute left-full top-0 w-48 bg-white shadow-lg">
                           <li>
                             <a
                               href="/san-pham/samsung-galaxy-s24"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S24
+                              Galaxy S25
                             </a>
                           </li>
                           <li>
@@ -327,7 +327,7 @@ const Header = () => {
                               href="/san-pham/samsung-galaxy-s24-plus"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S24 Plus
+                              Galaxy S25 Plus
                             </a>
                           </li>
                           <li>
@@ -335,7 +335,7 @@ const Header = () => {
                               href="/san-pham/samsung-galaxy-s24-ultra"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S24 Ultra
+                              Galaxy S25 Ultra
                             </a>
                           </li>
                         </ul>
@@ -347,19 +347,27 @@ const Header = () => {
                         href="#"
                         className="block px-4 py-2 hover:bg-gray-200 text-gray-800 font-semibold"
                         onClick={(e) =>
-                          toggleSubMenu("Samsung Galaxy S23 Series", e)
+                          toggleSubMenu("Samsung Galaxy S24 Series", e)
                         }
                       >
-                        Galaxy S23 Series ▶
+                        Galaxy S24 Series ▶
                       </a>
-                      {openSubMenu === "Samsung Galaxy S23 Series" && (
+                      {openSubMenu === "Samsung Galaxy S24 Series" && (
                         <ul className="absolute left-full top-0 w-48 bg-white shadow-lg">
+                          <li>
+                            <a
+                              href="/san-pham/samsung-galaxy-s24-fe"
+                              className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
+                            >
+                              Galaxy S24 FE
+                            </a>
+                          </li>
                           <li>
                             <a
                               href="/san-pham/samsung-galaxy-s23"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S23
+                              Galaxy S24
                             </a>
                           </li>
                           <li>
@@ -367,7 +375,7 @@ const Header = () => {
                               href="/san-pham/samsung-galaxy-s23-plus"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S23 Plus
+                              Galaxy S24 Plus
                             </a>
                           </li>
                           <li>
@@ -375,7 +383,7 @@ const Header = () => {
                               href="/san-pham/samsung-galaxy-s23-ultra"
                               className="block px-4 py-2 hover:bg-gray-200 text-gray-800"
                             >
-                              Galaxy S23 Ultra
+                              Galaxy S24 Ultra
                             </a>
                           </li>
                         </ul>
