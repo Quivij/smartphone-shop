@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
-// import Products from "../pages/Products";
-// import ProductDetail from "../pages/ProductDetail";
+import Products from "../pages/Products";
+import PhoneDetails from "../pages/PhoneDetails";
 // import Cart from "../pages/Cart";
 // import Checkout from "../pages/Checkout";
 // import NotFound from "../pages/NotFound";
@@ -13,6 +13,8 @@ const AppRouter = () => {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/phones/:productId" element={<PhoneDetails />} />
         </Route>
       </Routes>
     </Router>
