@@ -2,10 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Home from "../pages/Home";
 import Products from "../pages/Products";
-import PhoneDetails from "../pages/PhoneDetails";
-// import Cart from "../pages/Cart";
-// import Checkout from "../pages/Checkout";
-// import NotFound from "../pages/NotFound";
+import ProductDetail from "../pages/ProductDetail";
+import AllProducts from "../components/AllProducts";
 
 const AppRouter = () => {
   return (
@@ -13,8 +11,13 @@ const AppRouter = () => {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
-          <Route path="products" element={<Products />} />
-          <Route path="products/phones/:productId" element={<PhoneDetails />} />
+          <Route path="/products" element={<AllProducts />} />
+          <Route path="/products/:category" element={<Products />} />
+          <Route
+            path="/products/:category/:subcategory"
+            element={<Products />}
+          />
+          <Route path="/product/:id" element={<ProductDetail />} />
         </Route>
       </Routes>
     </Router>

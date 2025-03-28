@@ -1,22 +1,34 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 
-const Breadcrumb = ({ items }) => {
+const Breadcrumb = () => {
+  const location = useLocation();
+  const paths = location.pathname.split("/").filter((path) => path !== "");
+
+  // Ẩn breadcrumb nếu đang ở trang chủ
+  if (paths.length === 0) return null;
+
   return (
-    <nav className="text-sm">
-      <ol className="flex space-x-2 text-gray-500">
-        {items.map((item, index) => (
-          <li key={index} className="flex items-center">
-            {index !== 0 && <span className="mx-2">/</span>}
-            {item.href ? (
-              <Link to={item.href} className="text-blue-500 hover:underline">
-                {item.label}
-              </Link>
-            ) : (
-              <span className="text-gray-700">{item.label}</span>
-            )}
-          </li>
+    <nav className="text-sm text-gray-600 mb-4">
+      <Link to="/" className="hover:underline">
+        Home
+      </Link>{" "}
+      /
+      <Link to="/products" className="hover:underline">
+        Products
+      </Link>
+      {paths.length > 1 &&
+        paths.slice(1).map((path, index) => (
+          <span key={index}>
+            {" / "}
+            <Link
+              to={`/${paths.slice(0, index + 2).join("/")}`}
+              className="hover:underline"
+            >
+              {path}
+            </Link>
+          </span>
         ))}
-      </ol>
     </nav>
   );
 };

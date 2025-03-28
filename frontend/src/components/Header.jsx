@@ -5,12 +5,12 @@ import { useState } from "react";
 const menuItems = [
   {
     label: "iPhone",
-    link: "/products/iphone",
+    link: "products/iphone",
     subMenu: [
-      { label: "iPhone 16 Series", link: "/products/iphone-16" },
-      { label: "iPhone 15 Series", link: "/products/iphone-15" },
-      { label: "iPhone 14", link: "/products/iphone-14" },
-      { label: "iPhone 13", link: "/products/iphone-13" },
+      { label: "iPhone 16 Series", link: "/products/iphone/16series" },
+      { label: "iPhone 15 Series", link: "/products/iphone/15series" },
+      { label: "iPhone 14", link: "/products/iphone/14series" },
+      { label: "iPhone 13", link: "/products/iphone/13series" },
     ],
   },
   {
@@ -57,11 +57,11 @@ const menuItems = [
   },
   {
     label: "Điện thoại",
-    link: "/products/dien-thoai-khac",
+    link: "/products/dienthoai",
     subMenu: [
-      { label: "Nokia", link: "/products/xiaomi" },
-      { label: "Itel", link: "/products/oppo" },
-      { label: "Realme", link: "/products/vivo" },
+      { label: "Nokia", link: "/products/nokia" },
+      { label: "Itel", link: "/products/intel" },
+      { label: "Realme", link: "/products/realme" },
     ],
   },
 ];
