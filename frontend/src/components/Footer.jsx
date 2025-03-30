@@ -5,19 +5,6 @@ const Footer = () => {
     <footer className="w-screen bg-gray-100 border-t-2 border-black py-10">
       <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
         {/* Tải ứng dụng */}
-        <p className="text-lg font-bold">Tải ứng dụng tại</p>
-        <div className="flex gap-6 my-4">
-          <img
-            src="/images/appstore.png"
-            alt="App Store"
-            className="w-40 cursor-pointer"
-          />
-          <img
-            src="/images/googleplay.png"
-            alt="Google Play"
-            className="w-40 cursor-pointer"
-          />
-        </div>
 
         {/* Nhập email */}
         <p className="text-lg font-bold">

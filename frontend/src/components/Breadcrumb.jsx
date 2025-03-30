@@ -1,34 +1,35 @@
-import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const Breadcrumb = () => {
   const location = useLocation();
-  const paths = location.pathname.split("/").filter((path) => path !== "");
-
-  // Ẩn breadcrumb nếu đang ở trang chủ
-  if (paths.length === 0) return null;
+  const pathnames = location.pathname.split("/").filter((x) => x);
+  if (location.pathname === "/") return null;
 
   return (
-    <nav className="text-sm text-gray-600 mb-4">
-      <Link to="/" className="hover:underline">
-        Home
-      </Link>{" "}
-      /
-      <Link to="/products" className="hover:underline">
-        Products
-      </Link>
-      {paths.length > 1 &&
-        paths.slice(1).map((path, index) => (
-          <span key={index}>
-            {" / "}
-            <Link
-              to={`/${paths.slice(0, index + 2).join("/")}`}
-              className="hover:underline"
-            >
-              {path}
-            </Link>
-          </span>
-        ))}
+    <nav className="text-sm text-gray-500 my-4">
+      <ul className="flex items-center space-x-2">
+        <li>
+          <Link to="/" className="text-blue-500 hover:underline">
+            Home
+          </Link>
+        </li>
+        {pathnames.map((value, index) => {
+          const pathTo = `/${pathnames.slice(0, index + 1).join("/")}`;
+          const isLast = index === pathnames.length - 1;
+          return (
+            <li key={index} className="flex items-center">
+              <span className="mx-1">/</span>
+              {isLast ? (
+                <span className="text-gray-700">{value}</span>
+              ) : (
+                <Link to={pathTo} className="text-blue-500 hover:underline">
+                  {value}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 };

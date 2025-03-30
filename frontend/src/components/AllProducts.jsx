@@ -11,7 +11,7 @@ const AllProducts = () => {
             key={product.id}
             className="border p-2 rounded-lg shadow hover:shadow-lg flex flex-col items-center"
           >
-            <Link to={`/product/${product.id}`} className="w-full">
+            <Link to={`/${product.id}`} className="w-full">
               <div className="w-full h-40 flex justify-center items-center bg-gray-100 rounded-lg">
                 <img
                   src={product.image}

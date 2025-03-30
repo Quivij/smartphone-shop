@@ -1,11 +1,11 @@
-import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
+import { FaUser, FaShoppingCart, FaSearch, FaCaretDown } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 const menuItems = [
   {
     label: "iPhone",
-    link: "products/iphone",
+    link: "/products/iphone",
     subMenu: [
       { label: "iPhone 16 Series", link: "/products/iphone/16series" },
       { label: "iPhone 15 Series", link: "/products/iphone/15series" },
@@ -69,6 +69,7 @@ const menuItems = [
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -147,9 +148,52 @@ const Header = () => {
           </div>
 
           {/* Icons */}
-          <div className="flex space-x-4">
-            <FaShoppingCart className="text-gray-600 text-xl cursor-pointer" />
-            <FaUser className="text-gray-600 text-xl cursor-pointer" />
+          <div className="flex space-x-4 items-center">
+            {/* Giỏ hàng */}
+            <div className="flex items-center space-x-2 cursor-pointer">
+              <FaShoppingCart className="text-gray-600 text-xl" />
+              <p>Mua hàng</p>
+            </div>
+
+            {/* Người dùng */}
+            <div className="relative">
+              <div
+                className="flex items-center space-x-2 cursor-pointer"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <FaUser className="text-gray-600 text-xl" />
+                <span className="text-gray-600">Đăng nhập/Đăng ký</span>
+                <FaCaretDown
+                  className={`transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+
+              {/* Dropdown menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <ul className="text-gray-700">
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                      <Link to="/login" className="block w-full h-full">
+                        Đăng nhập
+                      </Link>
+                    </li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                      <Link to="/register" className="block w-full h-full">
+                        Đăng ký
+                      </Link>
+                    </li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                      Tài khoản của tôi
+                    </li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                      Đơn hàng
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
