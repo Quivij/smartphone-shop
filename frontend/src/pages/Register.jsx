@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { InputField } from "../components/InputField";
 import { Button } from "../components/Button";
+import axios from "axios";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -9,19 +10,37 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
+
     if (!name || !email || !password || !confirmPassword) {
       setError("Vui lòng nhập đầy đủ thông tin");
       return;
     }
+
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
       return;
     }
-    console.log("Đăng ký với:", { name, email, password });
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/api/users/register",
+        {
+          name,
+          email,
+          password,
+          confirmPassword,
+        }
+      );
+      setSuccessMessage(response.data.message);
+    } catch (err) {
+      setError(err.response?.data?.message || "Đăng ký thất bại");
+    }
   };
 
   return (
@@ -31,6 +50,9 @@ const Register = () => {
           Đăng Ký
         </h2>
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {successMessage && (
+          <p className="text-green-500 text-sm mt-2">{successMessage}</p>
+        )}
 
         <form onSubmit={handleRegister} className="mt-4">
           <InputField
