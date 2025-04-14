@@ -3,8 +3,10 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
-const userRoutes = require("./routes/userRoutes");
+const userRoutes = require("./routes/UserRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
+const productRoutes = require("./routes/productRoutes");
+const path = require("path");
 
 // Load biến môi trường từ file .env
 dotenv.config();
@@ -16,12 +18,20 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors()); // Cho phép frontend truy cập API
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ✅ URL frontend
+    credentials: true, // ✅ Cho phép gửi cookie kèm request
+  })
+);
+
 app.use(express.json()); // Xử lý dữ liệu JSON từ request
 app.use(morgan("dev")); // Ghi log request
 
 // Định nghĩa các routes
 app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Middleware xử lý lỗi
 app.use(errorHandler);

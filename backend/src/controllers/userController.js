@@ -1,6 +1,22 @@
 const User = require("../models/User"); // Đảm bảo đường dẫn đúng
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+// Tạo Access Token (hết hạn sau 15 phút)
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, isAdmin: user.isAdmin },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+};
+
+// Tạo Refresh Token (hết hạn sau 30 ngày)
+const generateRefreshToken = (user) => {
+  return jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, {
+    expiresIn: "30d",
+  });
+};
 
 const registerUser = async (req, res) => {
   try {
@@ -33,11 +49,15 @@ const registerUser = async (req, res) => {
     await user.save();
 
     // Tạo token
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Lưu Refresh Token vào cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
 
     res.status(201).json({
       message: "Đăng ký thành công",
@@ -46,14 +66,16 @@ const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
-        token,
       },
+      accessToken,
     });
   } catch (error) {
     console.error(error); // In lỗi ra console để dễ dàng xác định vấn đề
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+///////ĐĂNG NHÂP
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -78,11 +100,16 @@ const loginUser = async (req, res) => {
     // }
 
     // Tạo JWT token
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // Tạo token
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Lưu Refresh Token vào cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
 
     res.status(200).json({
       message: "Đăng nhập thành công",
@@ -91,8 +118,8 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
-        token,
       },
+      accessToken,
     });
   } catch (error) {
     console.error(error);
@@ -223,10 +250,10 @@ const getAllUsers = async (req, res) => {
 };
 const getUserDetail = async (req, res) => {
   try {
-    const { userId } = req.params; // Lấy ID từ URL
+    const { userId } = req.params;
 
-    // Kiểm tra nếu không phải admin thì chỉ được xem chính mình
-    if (!req.user.isAdmin && req.user.id !== userId) {
+    // Nếu không phải admin thì chỉ được xem thông tin của chính mình
+    if (!req.user.isAdmin && req.user.id.toString() !== userId.toString()) {
       return res
         .status(403)
         .json({ message: "Bạn không có quyền xem thông tin người dùng này" });
@@ -277,6 +304,77 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+////////TOKEN HET HAN
+const refreshToken = (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken)
+      return res.status(401).json({ message: "Chưa đăng nhập" });
+
+    jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ message: "Token không hợp lệ" });
+
+      const newAccessToken = generateAccessToken({
+        id: user.id,
+        isAdmin: user.isAdmin,
+      });
+
+      res.status(200).json({ accessToken: newAccessToken });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+// Đăng xuất (Xóa Refresh Token)
+const logoutUser = (req, res) => {
+  res.clearCookie("refreshToken");
+  res.status(200).json({ message: "Đăng xuất thành công" });
+};
+
+// Update user profile
+
+const getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // Lấy ID người dùng từ middleware xác thực
+    const { name, email, phone, address } = req.body;
+
+    let updateData = { name, email, phone, address };
+
+    // Nếu có file avatar mới được upload
+    if (req.file) {
+      const avatarPath = `/uploads/${req.file.filename}`;
+      updateData.avatar = avatarPath;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true, // Trả về dữ liệu mới nhất
+      runValidators: true,
+    }).select("-password"); // Không trả về password
+
+    res.status(200).json({
+      message: "Cập nhật thông tin thành công!",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật profile:", error);
+    res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật profile." });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -286,4 +384,8 @@ module.exports = {
   getAllUsers,
   getUserDetail,
   deleteUser,
+  refreshToken,
+  logoutUser,
+  updateUserProfile,
+  getMyProfile,
 };

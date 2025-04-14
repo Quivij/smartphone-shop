@@ -9,17 +9,16 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Gắn thông tin người dùng từ token vào req.user
+    req.user = { id: decoded.id, isAdmin: decoded.isAdmin }; // ✅ tốt hơn
     next();
   } catch (error) {
     res.status(401).json({ message: "Token không hợp lệ" });
   }
 };
 
-// Middleware kiểm tra quyền Admin
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
-    return next(); // Nếu là admin, tiếp tục xử lý yêu cầu
+    return next();
   } else {
     return res.status(403).json({ message: "Bạn không có quyền truy cập" });
   }

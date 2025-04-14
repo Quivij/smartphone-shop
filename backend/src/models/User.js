@@ -15,11 +15,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    avatar: { type: String, default: "" },
     isAdmin: {
       type: Boolean,
       default: false,
     },
     isVerified: { type: Boolean, default: false },
+    address: { type: String, default: "" }, // ✅ Thêm address
+    phone: { type: String, default: "" }, // ✅ Thêm phone
   },
   {
     timestamps: true,

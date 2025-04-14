@@ -1,6 +1,8 @@
 import { FaUser, FaShoppingCart, FaSearch, FaCaretDown } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLogout } from "../hooks/useLogout";
+import { useUserStore } from "../store/useUserStore";
 
 const menuItems = [
   {
@@ -60,16 +62,27 @@ const menuItems = [
     link: "/products/dienthoai",
     subMenu: [
       { label: "Nokia", link: "/products/nokia" },
-      { label: "Itel", link: "/products/intel" },
+      { label: "Itel", link: "/products/itel" },
       { label: "Realme", link: "/products/realme" },
     ],
   },
 ];
 
 const Header = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Lấy user và avatar từ Zustand store
+  const { user, setUser, clearUser } = useUserStore();
+  const avatar = user?.avatar;
+  const fullAvatarUrl = avatar?.startsWith("http")
+    ? avatar
+    : avatar
+    ? `${import.meta.env.VITE_API_URL}${avatar}`
+    : null;
+
+  const { handleLogout } = useLogout();
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -82,6 +95,21 @@ const Header = () => {
       handleSearch();
     }
   };
+
+  const handleLogoutClick = () => {
+    handleLogout();
+    clearUser(); // Xóa thông tin người dùng khi đăng xuất
+  };
+
+  useEffect(() => {
+    // Cập nhật lại avatar và thông tin người dùng khi login
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      // Nếu có thông tin người dùng trong localStorage, cập nhật vào Zustand store
+      setUser(storedUser);
+    }
+  }, [setUser]);
+
   return (
     <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
       <div className="container mx-auto px-4">
@@ -128,8 +156,7 @@ const Header = () => {
             </ul>
           </nav>
 
-          {/* Icons */}
-
+          {/* Search */}
           <div className="flex items-center border rounded-md overflow-hidden">
             <input
               type="text"
@@ -149,20 +176,30 @@ const Header = () => {
 
           {/* Icons */}
           <div className="flex space-x-4 items-center">
-            {/* Giỏ hàng */}
+            {/* Giỏ hàng và các icon khác */}
             <div className="flex items-center space-x-2 cursor-pointer">
               <FaShoppingCart className="text-gray-600 text-xl" />
               <p>Mua hàng</p>
             </div>
 
-            {/* Người dùng */}
+            {/* User */}
             <div className="relative">
               <div
                 className="flex items-center space-x-2 cursor-pointer"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <FaUser className="text-gray-600 text-xl" />
-                <span className="text-gray-600">Đăng nhập/Đăng ký</span>
+                {avatar ? (
+                  <img
+                    src={fullAvatarUrl}
+                    alt="Avatar"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <FaUser className="text-gray-600 text-xl" />
+                )}
+                <span className="text-gray-600">
+                  {user ? user.email : "Đăng nhập/Đăng ký"}
+                </span>
                 <FaCaretDown
                   className={`transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""
@@ -170,26 +207,42 @@ const Header = () => {
                 />
               </div>
 
-              {/* Dropdown menu */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
                   <ul className="text-gray-700">
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                      <Link to="/login" className="block w-full h-full">
-                        Đăng nhập
-                      </Link>
-                    </li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                      <Link to="/register" className="block w-full h-full">
-                        Đăng ký
-                      </Link>
-                    </li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                      Tài khoản của tôi
-                    </li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                      Đơn hàng
-                    </li>
+                    {user ? (
+                      <>
+                        <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                          <Link to="/profile" className="block w-full h-full">
+                            Tài khoản của tôi
+                          </Link>
+                        </li>
+                        <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                          <Link to="/orders" className="block w-full h-full">
+                            Đơn hàng
+                          </Link>
+                        </li>
+                        <li
+                          className="p-3 hover:bg-gray-100 cursor-pointer"
+                          onClick={handleLogoutClick}
+                        >
+                          Đăng xuất
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                          <Link to="/login" className="block w-full h-full">
+                            Đăng nhập
+                          </Link>
+                        </li>
+                        <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                          <Link to="/register" className="block w-full h-full">
+                            Đăng ký
+                          </Link>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
               )}
@@ -200,4 +253,5 @@ const Header = () => {
     </header>
   );
 };
+
 export default Header;
