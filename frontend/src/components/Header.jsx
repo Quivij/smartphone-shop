@@ -1,6 +1,6 @@
 import { FaUser, FaShoppingCart, FaSearch, FaCaretDown } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLogout } from "../hooks/useLogout";
 import { useUserStore } from "../store/useUserStore";
 
@@ -74,13 +74,15 @@ const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Lấy user và avatar từ Zustand store
-  const { user, setUser, clearUser } = useUserStore();
+  const { user, clearUser } = useUserStore();
   const avatar = user?.avatar;
   const fullAvatarUrl = avatar?.startsWith("http")
     ? avatar
     : avatar
-    ? `${import.meta.env.VITE_API_URL}${avatar}`
+    ? `http://localhost:3001${avatar}`
     : null;
+  console.log("Avatar in user store: ", avatar);
+  console.log("Full avatar URL: ", fullAvatarUrl);
 
   const { handleLogout } = useLogout();
 
@@ -100,15 +102,6 @@ const Header = () => {
     handleLogout();
     clearUser(); // Xóa thông tin người dùng khi đăng xuất
   };
-
-  useEffect(() => {
-    // Cập nhật lại avatar và thông tin người dùng khi login
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) {
-      // Nếu có thông tin người dùng trong localStorage, cập nhật vào Zustand store
-      setUser(storedUser);
-    }
-  }, [setUser]);
 
   return (
     <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
@@ -198,7 +191,7 @@ const Header = () => {
                   <FaUser className="text-gray-600 text-xl" />
                 )}
                 <span className="text-gray-600">
-                  {user ? user.email : "Đăng nhập/Đăng ký"}
+                  {user ? user.name : "Đăng nhập/Đăng ký"}
                 </span>
                 <FaCaretDown
                   className={`transition-transform ${
@@ -222,6 +215,13 @@ const Header = () => {
                             Đơn hàng
                           </Link>
                         </li>
+                        {user.isAdmin && (
+                          <li className="p-3 hover:bg-gray-100 cursor-pointer">
+                            <Link to="/admin" className="block w-full h-full">
+                              Quản lý hệ thống
+                            </Link>
+                          </li>
+                        )}
                         <li
                           className="p-3 hover:bg-gray-100 cursor-pointer"
                           onClick={handleLogoutClick}

@@ -20,8 +20,10 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173", // ✅ URL frontend
-    credentials: true, // ✅ Cho phép gửi cookie kèm request
+    origin: "http://localhost:5173", // Frontend URL của bạn
+    methods: ["GET", "POST", "PUT", "DELETE"], // Các phương thức HTTP được phép
+    allowedHeaders: ["Content-Type", "Authorization"], // Các headers cho phép
+    credentials: true, // Cho phép gửi cookie kèm theo yêu cầu
   })
 );
 

@@ -1,4 +1,3 @@
-// src/pages/ProfilePage.jsx
 import React, { useEffect, useState } from "react";
 import { useFetchProfile } from "../hooks/useFetchProfile";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
@@ -9,8 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify"; // Import react-toastify
 
 const ProfilePage = () => {
-  const { setUser } = useUserStore(); // Lấy user từ store và setUser để cập nhật
-  const { data: profileData, isLoading } = useFetchProfile();
+  const { setUser, user } = useUserStore();
+  const { data: profileData, isLoading, isError } = useFetchProfile();
   const { mutate, isLoading: isUpdating } = useUpdateProfile();
   const navigate = useNavigate();
 
@@ -71,23 +70,25 @@ const ProfilePage = () => {
 
     mutate(updatedData, {
       onSuccess: (data) => {
-        // Cập nhật avatar mới vào store và localStorage
-        if (data.avatar) {
-          const avatarUrl = `http://localhost:3001${
-            data.avatar
-          }?t=${new Date().getTime()}`;
+        const avatarUrl = data.user.avatar?.startsWith("http")
+          ? data.user.avatar
+          : data.user.avatar
+          ? `http://localhost:3001${data.user.avatar}?t=${new Date().getTime()}`
+          : avatarPreview;
 
-          localStorage.setItem("avatar", avatarUrl);
+        const updatedUser = {
+          ...user, // giữ thông tin cũ (nếu có)
+          ...data.user, // cập nhật toàn bộ dữ liệu mới từ server
+          avatar: avatarUrl, // override avatar để chắc chắn link đầy đủ
+        };
 
-          setUser((prevUser) => ({ ...prevUser, avatar: avatarUrl }));
-
-          toast.success("Cập nhật thông tin thành công!");
-          navigate("/");
-        }
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
 
         toast.success("Cập nhật thông tin thành công!");
-        navigate("/"); // Điều hướng về trang Home sau khi cập nhật thành công
+        navigate("/"); // Di chuyển về trang chính hoặc trang cần thiết sau khi cập nhật
       },
+
       onError: () => {
         toast.error("Cập nhật thông tin thất bại, thử lại!");
       },
@@ -95,6 +96,7 @@ const ProfilePage = () => {
   };
 
   if (isLoading) return <div>Đang tải thông tin...</div>;
+  if (isError) return <div>Lỗi tải thông tin. Vui lòng thử lại sau!</div>;
 
   return (
     <div className="max-w-xl mx-auto mt-8 p-4 bg-white rounded shadow">

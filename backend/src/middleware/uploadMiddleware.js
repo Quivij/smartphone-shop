@@ -1,35 +1,32 @@
-const multer = require("multer");
-const path = require("path");
 const fs = require("fs");
+const path = require("path");
 
-// Tạo thư mục uploads nếu chưa có
-const uploadDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar-${Date.now()}${ext}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpg|jpeg|png/;
-  const isImage =
-    allowedTypes.test(path.extname(file.originalname).toLowerCase()) &&
-    allowedTypes.test(file.mimetype);
-  if (isImage) {
-    cb(null, true);
-  } else {
-    cb(new Error("Chỉ cho phép ảnh jpg, jpeg, png"), false);
+// Đảm bảo rằng thư mục uploads/products tồn tại
+const createFolderIfNotExist = (folderPath) => {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true }); // Tạo thư mục nếu chưa tồn tại
   }
 };
 
-const upload = multer({ storage, fileFilter });
+// Trước khi lưu tệp ảnh, hãy tạo thư mục nếu nó chưa tồn tại
+const uploadDirectory = path.join(__dirname, "../uploads/products");
+createFolderIfNotExist(uploadDirectory);
+
+// Phần mã upload của bạn
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDirectory); // Đảm bảo sử dụng đường dẫn đúng
+  },
+  filename: (req, file, cb) => {
+    const filename = `${Date.now()}-${Math.floor(Math.random() * 100000000)}.${
+      file.mimetype.split("/")[1]
+    }`;
+    cb(null, filename); // Đặt tên cho tệp
+  },
+});
+
+const upload = multer({ storage });
 
 module.exports = upload;

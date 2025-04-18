@@ -23,7 +23,7 @@ const Login = () => {
 
     if (success) {
       toast.success(successMessage || "Đăng nhập thành công!");
-      navigate("/");
+      navigate("/"); // Chuyển hướng đến trang chủ sau khi đăng nhập
     } else {
       toast.error(error || "Đăng nhập thất bại");
     }
@@ -48,6 +48,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Nhập email"
+            required
           />
           <InputField
             label="Mật khẩu"
@@ -55,6 +56,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Nhập mật khẩu"
+            required
           />
           <Button text={loading ? "Đang đăng nhập..." : "Đăng Nhập"} />
         </form>
