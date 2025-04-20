@@ -1,7 +1,7 @@
 const multer = require("multer");
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/uploadMiddleware");
+const uploadAvatar = require("../middleware/uploadAvatar");
 const path = require("path");
 
 const {
@@ -47,14 +47,19 @@ router.get("/", authMiddleware, isAdmin, getAllUsers);
 router.get("/:userId", authMiddleware, isAdmin, getUserDetail);
 
 // Cập nhật thông tin người dùng (dành cho người dùng đăng nhập hoặc admin)
-router.put("/profile", authMiddleware, upload.single("avatar"), updateUser);
+router.put(
+  "/profile",
+  authMiddleware,
+  uploadAvatar.single("avatar"),
+  updateUser
+);
 
 // Route admin cập nhật thông tin người dùng khác (Cập nhật bất kỳ user nào)
 router.put(
   "/:id",
   authMiddleware,
   isAdmin,
-  upload.single("avatar"),
+  uploadAvatar.single("avatar"),
   updateUser
 );
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
   const [form, setForm] = useState({
@@ -7,9 +7,24 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
     price: initialValues.price || "",
     category: initialValues.category || "",
     brand: initialValues.brand || "",
-    specifications: initialValues.specifications || {},
+    specifications: initialValues.specifications || {
+      screen: "",
+      cpu: "",
+      ram: "",
+      storage: "",
+      battery: "",
+      camera: "",
+      os: "",
+    },
     variants: initialValues.variants || [{ color: "", stock: "", images: [] }],
   });
+
+  // Cập nhật state khi `initialValues` thay đổi
+  useEffect(() => {
+    if (isEdit) {
+      setForm(initialValues);
+    }
+  }, [isEdit, initialValues]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,7 +48,7 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
 
   const handleVariantImagesChange = (index, files) => {
     const updated = [...form.variants];
-    updated[index].images = files;
+    updated[index].images = Array.from(files); // Chuyển từ FileList → Array
     setForm({ ...form, variants: updated });
   };
 
@@ -54,22 +69,55 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
     e.preventDefault();
     const formData = new FormData();
 
-    // Thông tin cơ bản
-    for (let key of ["name", "description", "price", "brand", "category"]) {
+    const requiredFields = [
+      "name",
+      "description",
+      "price",
+      "brand",
+      "category",
+    ];
+    for (let key of requiredFields) {
+      if (!form[key]) {
+        alert(`Trường ${key} là bắt buộc!`);
+        return;
+      }
       formData.append(key, form[key]);
     }
 
-    // Specifications
+    // Gửi specifications dưới dạng JSON string
     formData.append("specifications", JSON.stringify(form.specifications));
 
-    // Variants
-    form.variants.forEach((variant, i) => {
-      formData.append(`variants[${i}][color]`, variant.color);
-      formData.append(`variants[${i}][stock]`, variant.stock);
-      for (let file of variant.images) {
-        formData.append(`variants[${i}][images]`, file);
-      }
-    });
+    if (isEdit) {
+      // ✅ Logic cập nhật sản phẩm
+      const variantsToSend = form.variants.map((v) => ({
+        color: v.color,
+        stock: v.stock,
+        images: v.images.map((img) => img.name), // chỉ tên ảnh
+      }));
+      formData.append("variants", JSON.stringify(variantsToSend));
+
+      form.variants.forEach((variant) => {
+        if (Array.isArray(variant.images)) {
+          variant.images.forEach((file) => {
+            formData.append("files", file); // upload tất cả ảnh vào 1 trường
+          });
+        }
+      });
+    } else {
+      // ✅ Logic tạo mới sản phẩm
+      form.variants.forEach((variant, i) => {
+        formData.append(`variants[${i}][color]`, variant.color);
+        formData.append(`variants[${i}][stock]`, variant.stock);
+        variant.images.forEach((file) => {
+          formData.append(`variants[${i}][images]`, file);
+        });
+      });
+    }
+
+    // Debug (tuỳ chọn)
+    for (let [key, val] of formData.entries()) {
+      console.log(`${key}:`, val);
+    }
 
     onSubmit(formData);
   };
@@ -81,7 +129,7 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
         <input
           key={field}
           name={field}
-          placeholder={field}
+          placeholder={`Nhập ${field}`}
           value={form[field]}
           onChange={handleChange}
           className="w-full border p-2 rounded"

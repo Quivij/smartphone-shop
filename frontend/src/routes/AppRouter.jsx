@@ -15,7 +15,7 @@ import Unauthorized from "../pages/Unauthorized";
 
 import AdminLayout from "../layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
-import ProductsAdmin from "../pages/admin/Products";
+import AdminProduct from "../pages/admin/Products";
 import Orders from "../pages/admin/Orders";
 
 import CreateProduct from "../pages/admin/products/CreateProduct";
@@ -64,7 +64,7 @@ const AppRouter = () => {
         >
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products">
-            <Route index element={<ProductsAdmin />} />
+            <Route index element={<AdminProduct />} />
             <Route path="create" element={<CreateProduct />} />
             <Route path="edit/:id" element={<EditProduct />} />
           </Route>

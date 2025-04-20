@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema(
     category: { type: String, required: true },
     brand: { type: String, required: true },
 
-    // ✅ Biến thể theo màu sắc
+    // Biến thể sản phẩm (màu sắc, ảnh, tồn kho)
     variants: [
       {
         color: { type: String, required: true },
@@ -17,16 +17,18 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
+    // Thông số kỹ thuật
     specifications: {
-      screen: { type: String },
-      os: { type: String },
-      cpu: { type: String },
-      ram: { type: String },
-      storage: { type: String },
-      battery: { type: String },
-      camera: { type: String },
+      screen: { type: String, required: true, default: "" },
+      os: { type: String, required: true, default: "" },
+      cpu: { type: String, required: true, default: "" },
+      ram: { type: String, required: true, default: "" },
+      storage: { type: String, required: true, default: "" },
+      battery: { type: String, required: true, default: "" },
+      camera: { type: String, required: true, default: "" },
     },
 
+    // Đánh giá
     ratings: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

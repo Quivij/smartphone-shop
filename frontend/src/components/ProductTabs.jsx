@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAllProducts } from "../api/product"; // sửa lại đường dẫn theo dự án của bạn
+import { getAllProducts } from "../api/product"; // Đảm bảo đường dẫn đúng
 
 const categories = [
   { id: "all", name: "Tất cả" },
@@ -9,7 +9,7 @@ const categories = [
   { id: "watch", name: "Watch" },
   { id: "ipad", name: "Ipad" },
   { id: "samsung", name: "SamSung" },
-  { id: "smartphone", name: "Điện Thoại" }, // nếu backend trả category là "smartphone"
+  { id: "smartphone", name: "Điện Thoại" },
 ];
 
 export default function ProductTabs() {
@@ -20,10 +20,12 @@ export default function ProductTabs() {
     data: products = [],
     isLoading,
     isError,
+    error,
   } = useQuery({
     queryKey: ["products", activeTab],
     queryFn: () =>
       getAllProducts(activeTab === "all" ? {} : { category: activeTab }),
+    retry: 2, // Retry the query up to 2 times in case of failure
   });
 
   const filteredProducts =
@@ -58,7 +60,7 @@ export default function ProductTabs() {
           </p>
         ) : isError ? (
           <p className="col-span-full text-center text-red-500">
-            Lỗi tải dữ liệu sản phẩm.
+            Lỗi tải dữ liệu sản phẩm: {error.message}
           </p>
         ) : filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
@@ -69,7 +71,7 @@ export default function ProductTabs() {
             >
               <div className="w-32 h-32 flex items-center justify-center">
                 <img
-                  src={product.images?.[0]}
+                  src={product.variants?.[0]?.images[0]}
                   alt={product.name}
                   className="max-w-full max-h-full object-contain rounded-lg"
                 />
@@ -79,6 +81,15 @@ export default function ProductTabs() {
               </h3>
               <p className="text-red-500 font-bold text-base mt-1">
                 {product.price.toLocaleString()} ₫
+              </p>
+              <p
+                className={`text-sm font-semibold mt-2 ${
+                  product.variants?.[0]?.stock > 0
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {product.variants?.[0]?.stock > 0 ? "Còn hàng" : "Hết hàng"}
               </p>
             </div>
           ))

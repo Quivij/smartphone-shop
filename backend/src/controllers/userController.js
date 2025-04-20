@@ -290,7 +290,7 @@ const updateUser = async (req, res) => {
 
     // Nếu có file avatar (upload mới)
     if (req.file) {
-      const avatarPath = `/uploads/${req.file.filename}`;
+      const avatarPath = `/uploads/avatars/${req.file.filename}`;
       updateData.avatar = avatarPath;
     }
 

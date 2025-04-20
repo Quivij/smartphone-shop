@@ -1,43 +1,25 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadMiddleware");
+const upload = require("../middleware/uploadMiddleware"); // Giả sử bạn đã tạo file upload.js trong middleware
+const productCtrl = require("../controllers/productController");
 
-const {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  deleteManyProducts,
-} = require("../controllers/productController");
+// Tạo sản phẩm mới (bao gồm upload ảnh)
+router.post("/", upload.any(), productCtrl.createProduct);
 
-// ✅ Lấy danh sách sản phẩm (Hỗ trợ tìm kiếm, lọc, phân trang)
-router.get("/", getAllProducts);
+// Lấy danh sách sản phẩm (có thể lọc theo category, brand, search)
+router.get("/", productCtrl.getProducts);
 
-// ✅ Lấy thông tin sản phẩm theo ID
-router.get("/:id", getProductById);
+// Lấy chi tiết sản phẩm
+router.get("/:id", productCtrl.getProductById);
 
-// ✅ Thêm sản phẩm mới (Chỉ Admin + Upload ảnh)
-router.post(
-  "/",
-  authMiddleware,
-  isAdmin,
-  upload.array("images", 5),
-  createProduct
-);
+// Cập nhật sản phẩm (bao gồm upload ảnh nếu có)
+// Thay vì upload.array("images") → dùng any()
+router.put("/:id", upload.any(), productCtrl.updateProduct);
 
-// ✅ Cập nhật sản phẩm (Chỉ Admin + Upload ảnh)
-router.put(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  upload.array("images", 5),
-  updateProduct
-);
+// Xóa sản phẩm
+router.delete("/:id", productCtrl.deleteProduct);
 
-// ✅ Xóa sản phẩm (Chỉ Admin)
-router.delete("/:id", authMiddleware, isAdmin, deleteProduct);
-router.delete("/delete-many", authMiddleware, isAdmin, deleteManyProducts);
+// API thêm đánh giá
+router.post("/:id/ratings", productCtrl.addRating);
 
 module.exports = router;

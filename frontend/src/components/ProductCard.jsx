@@ -1,6 +1,6 @@
 import React from "react";
 
-const ProductCard = ({ product }) => {
+const ProductCard = React.memo(({ product }) => {
   const {
     name,
     description,
@@ -15,6 +15,14 @@ const ProductCard = ({ product }) => {
   const imageUrl = images?.[0]
     ? `${import.meta.env.VITE_API_BASE_URL}${images[0]}`
     : "https://via.placeholder.com/300";
+
+  // Xử lý trường hợp giá trị price không hợp lệ
+  const formattedPrice = price ? price.toLocaleString() : "Liên hệ";
+
+  // Kiểm tra createdAt để đảm bảo có giá trị hợp lệ
+  const formattedDate = createdAt
+    ? new Date(createdAt).toLocaleString("vi-VN")
+    : "Chưa xác định";
 
   return (
     <div className="rounded-xl shadow-md p-4 bg-white hover:shadow-lg transition flex flex-col">
@@ -37,14 +45,14 @@ const ProductCard = ({ product }) => {
       </div>
 
       <div className="mt-2 text-blue-600 font-bold text-lg">
-        {price.toLocaleString()}₫
+        {formattedPrice}₫
       </div>
 
       <div className="text-xs text-gray-400 mt-auto">
-        Tạo lúc: {new Date(createdAt).toLocaleString("vi-VN")}
+        Tạo lúc: {formattedDate}
       </div>
     </div>
   );
-};
+});
 
 export default ProductCard;

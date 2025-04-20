@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const multer = require("multer");
 
 // Đảm bảo rằng thư mục uploads/products tồn tại
 const createFolderIfNotExist = (folderPath) => {
@@ -8,18 +9,20 @@ const createFolderIfNotExist = (folderPath) => {
   }
 };
 
-// Trước khi lưu tệp ảnh, hãy tạo thư mục nếu nó chưa tồn tại
+// Đường dẫn đến thư mục uploads/products
 const uploadDirectory = path.join(__dirname, "../uploads/products");
+
+// Tạo thư mục nếu nó chưa tồn tại
 createFolderIfNotExist(uploadDirectory);
 
-// Phần mã upload của bạn
-const multer = require("multer");
-
+// Cấu hình Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDirectory); // Đảm bảo sử dụng đường dẫn đúng
+    // Đảm bảo rằng tệp sẽ được lưu vào thư mục uploads/products
+    cb(null, uploadDirectory);
   },
   filename: (req, file, cb) => {
+    // Tạo tên tệp duy nhất bằng cách sử dụng thời gian hiện tại và một giá trị ngẫu nhiên
     const filename = `${Date.now()}-${Math.floor(Math.random() * 100000000)}.${
       file.mimetype.split("/")[1]
     }`;
@@ -27,6 +30,21 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// Tạo upload middleware với Multer
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // Giới hạn kích thước tệp lên đến 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    // Kiểm tra loại tệp hợp lệ (ví dụ: chỉ chấp nhận hình ảnh)
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true); // Cho phép tệp
+    } else {
+      cb(new Error("File type not allowed"), false); // Từ chối tệp
+    }
+  },
+});
 
 module.exports = upload;

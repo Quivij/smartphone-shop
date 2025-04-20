@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useProducts } from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
 
@@ -47,6 +47,10 @@ const Products = () => {
       page: pageNumber,
     }));
   };
+
+  useEffect(() => {
+    // Nếu cần thực hiện các tác vụ sau khi tải dữ liệu, bạn có thể đặt ở đây
+  }, [productsData]);
 
   if (isLoading) return <div>Đang tải sản phẩm...</div>;
   if (isError) return <div>Lỗi khi tải sản phẩm</div>;
@@ -106,9 +110,9 @@ const Products = () => {
 
       {/* Danh sách sản phẩm */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {productsData?.products?.map((product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
+        {productsData?.products?.map((product) => {
+          return <ProductCard key={product._id} product={product} />;
+        })}
       </div>
 
       {/* Phân trang */}
