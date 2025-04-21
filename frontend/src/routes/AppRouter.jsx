@@ -25,6 +25,7 @@ import AdminUser from "../pages/admin/AdminUser";
 
 import EditUser from "../pages/admin/users/EditUser";
 import CreateUserPage from "../pages/admin/users/CreateUserPage";
+
 const AppRouter = () => {
   return (
     <Router>
@@ -42,6 +43,7 @@ const AppRouter = () => {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="unauthorized" element={<Unauthorized />} />
+
           <Route
             path="profile"
             element={

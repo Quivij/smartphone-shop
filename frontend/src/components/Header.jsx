@@ -1,8 +1,9 @@
 import { FaUser, FaShoppingCart, FaSearch, FaCaretDown } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useLogout } from "../hooks/useLogout";
 import { useUserStore } from "../store/useUserStore";
+import SearchDropdown from "./SearchDropdown"; // điều chỉnh path nếu cần
 
 const menuItems = [
   {
@@ -69,8 +70,6 @@ const menuItems = [
 ];
 
 const Header = () => {
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Lấy user và avatar từ Zustand store
@@ -81,22 +80,8 @@ const Header = () => {
     : avatar
     ? `http://localhost:3001${avatar}`
     : null;
-  console.log("Avatar in user store: ", avatar);
-  console.log("Full avatar URL: ", fullAvatarUrl);
 
   const { handleLogout } = useLogout();
-
-  const handleSearch = () => {
-    if (searchTerm.trim()) {
-      navigate(`/search?query=${searchTerm.trim()}`);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
 
   const handleLogoutClick = () => {
     handleLogout();
@@ -150,21 +135,8 @@ const Header = () => {
           </nav>
 
           {/* Search */}
-          <div className="flex items-center border rounded-md overflow-hidden">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="px-3 py-2 outline-none text-gray-700 w-64"
-            />
-            <button
-              onClick={handleSearch}
-              className="bg-blue-500 text-white px-3 py-2"
-            >
-              <FaSearch />
-            </button>
+          <div className="w-72">
+            <SearchDropdown />
           </div>
 
           {/* Icons */}

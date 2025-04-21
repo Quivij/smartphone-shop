@@ -4,17 +4,10 @@ const path = require("path");
 // Tạo sản phẩm mới
 exports.createProduct = async (req, res) => {
   try {
-    let {
-      name,
-      description,
-      price,
-      brand,
-      category,
-      specifications,
-      variants,
-    } = req.body;
+    let { name, description, brand, category, specifications, variants } =
+      req.body;
 
-    // Parse các trường JSON nếu là string
+    // Parse nếu là string (khi gửi từ form-data)
     if (typeof specifications === "string") {
       specifications = JSON.parse(specifications);
     }
@@ -24,37 +17,37 @@ exports.createProduct = async (req, res) => {
     }
 
     // Kiểm tra các trường bắt buộc
-    const requiredFields = [
-      "name",
-      "description",
-      "price",
-      "brand",
-      "category",
-    ];
+    const requiredFields = ["name", "description", "brand", "category"];
     for (let field of requiredFields) {
       if (!req.body[field]) {
         return res.status(400).json({ error: `${field} is required` });
       }
     }
 
-    // Xử lý ảnh nếu có
     const uploadedImages = req.files || [];
     let imagePaths = uploadedImages.map(
       (file) => `/uploads/products/${file.filename}`
     );
 
-    // Gán ảnh vào từng variant nếu cần
-    if (variants && Array.isArray(variants)) {
-      variants.forEach((variant, index) => {
-        variant.images = variant.images || []; // fallback nếu không có
-        variant.images = imagePaths.splice(0, variant.images.length); // gán đúng số ảnh
+    // Gán ảnh cho từng biến thể đúng cách
+    if (Array.isArray(variants)) {
+      variants = variants.map((variant) => {
+        const numImages = variant.images?.length || 0;
+        const assignedImages = imagePaths.splice(0, numImages);
+
+        return {
+          color: variant.color,
+          storage: variant.storage,
+          price: variant.price,
+          stock: variant.stock,
+          images: assignedImages,
+        };
       });
     }
 
     const product = new Product({
       name,
       description,
-      price,
       brand,
       category,
       specifications,
@@ -92,7 +85,14 @@ exports.getProducts = async (req, res) => {
       if (maxPrice) filter.finalPrice.$lte = Number(maxPrice);
     }
 
+    // Gửi response mà không lưu vào cache
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    // Tìm sản phẩm
     const products = await Product.find(filter)
+      .select("name price finalPrice category brand images") // Chọn các trường cần thiết
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
@@ -122,24 +122,17 @@ exports.getProductById = async (req, res) => {
 };
 
 // Cập nhật sản phẩm
-// Cập nhật sản phẩm và ảnh
+
 exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product)
       return res.status(404).json({ error: "Sản phẩm không tồn tại" });
 
-    let {
-      name,
-      description,
-      price,
-      brand,
-      category,
-      variants,
-      specifications,
-    } = req.body;
+    let { name, description, brand, category, specifications, variants } =
+      req.body;
 
-    // ✅ Parse specifications nếu là string (do FormData gửi lên)
+    // Parse nếu là string
     if (typeof specifications === "string") {
       try {
         specifications = JSON.parse(specifications);
@@ -150,7 +143,6 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // ✅ Parse variants nếu là string
     if (typeof variants === "string") {
       try {
         variants = JSON.parse(variants);
@@ -159,23 +151,32 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // ✅ Cập nhật thông tin nếu có
+    // Cập nhật thông tin cơ bản
     if (name) product.name = name;
     if (description) product.description = description;
-    if (price) product.price = price;
     if (brand) product.brand = brand;
     if (category) product.category = category;
     if (specifications) product.specifications = specifications;
 
-    if (variants) {
+    // Xử lý ảnh cho biến thể (nếu có upload mới)
+    if (variants && Array.isArray(variants)) {
       const uploadedImages = req.files || [];
       let imagePaths = uploadedImages.map(
         (file) => `/uploads/products/${file.filename}`
       );
 
-      // Gán ảnh vào đúng variant
-      variants.forEach((variant) => {
-        variant.images = imagePaths.splice(0, variant.images.length);
+      // Gán ảnh cho từng variant
+      variants = variants.map((variant) => {
+        const numImages = variant.images?.length || 0;
+        const assignedImages = imagePaths.splice(0, numImages);
+
+        return {
+          color: variant.color,
+          storage: variant.storage,
+          price: variant.price,
+          stock: variant.stock,
+          images: assignedImages, // ảnh mới
+        };
       });
 
       product.variants = variants;
@@ -250,5 +251,31 @@ exports.getProducts = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+exports.searchProduct = async (req, res) => {
+  const { query } = req.query;
+  try {
+    console.log("Query received:", query); // Log query để kiểm tra input
+    const products = await Product.find({
+      name: { $regex: query, $options: "i" },
+    }).select("name variants");
+
+    console.log("Products found:", products); // Log kết quả từ MongoDB
+
+    const result = products.map((p) => {
+      const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
+      return {
+        _id: p._id,
+        name: `${p.name} ${firstVariant.storage || ""} - Chính hãng VN/A`,
+        price: firstVariant.price || p.price || 0, // Dùng giá mặc định nếu không có variants
+        image: firstVariant.images?.[0] || p.images?.[0] || "", // Dùng ảnh mặc định nếu không có variants
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error in search:", err); // Log lỗi
+    res.status(500).json({ error: "Lỗi khi tìm kiếm sản phẩm" });
   }
 };

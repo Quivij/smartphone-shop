@@ -110,16 +110,17 @@ const AdminProduct = () => {
       product.variants.map((variant) => ({
         "Tên sản phẩm": product.name,
         "Màu sắc": variant.color,
-        Giá: product.price
-          ? product.price.toLocaleString() + "₫"
+        "Dung lượng": variant.storage,
+        Giá: variant.price
+          ? variant.price.toLocaleString("vi-VN") + "₫"
           : "Chưa có giá",
         "Tồn kho": variant.stock,
         "Thương hiệu": product.brand,
         "Ngày tạo": product.createdAt
-          ? new Date(product.createdAt).toLocaleDateString()
+          ? new Date(product.createdAt).toLocaleDateString("vi-VN")
           : "Chưa có",
         "Ngày cập nhật": product.updatedAt
-          ? new Date(product.updatedAt).toLocaleDateString()
+          ? new Date(product.updatedAt).toLocaleDateString("vi-VN")
           : "Chưa có",
       }))
     );
@@ -215,10 +216,13 @@ const AdminProduct = () => {
                 </td>
                 <td className="p-3 border">{product.name}</td>
                 <td className="p-3 border">
-                  {product.price
-                    ? product.price.toLocaleString("vi-VN") + "₫"
+                  {product.variants?.length > 0
+                    ? Math.min(
+                        ...product.variants.map((v) => v.price)
+                      ).toLocaleString("vi-VN") + "₫"
                     : "Chưa có giá"}
                 </td>
+
                 <td className="p-3 border">
                   {product.variants && product.variants.length > 0
                     ? product.variants.reduce(

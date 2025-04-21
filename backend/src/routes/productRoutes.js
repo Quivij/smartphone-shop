@@ -8,7 +8,7 @@ router.post("/", upload.any(), productCtrl.createProduct);
 
 // Lấy danh sách sản phẩm (có thể lọc theo category, brand, search)
 router.get("/", productCtrl.getProducts);
-
+router.get("/search", productCtrl.searchProduct);
 // Lấy chi tiết sản phẩm
 router.get("/:id", productCtrl.getProductById);
 

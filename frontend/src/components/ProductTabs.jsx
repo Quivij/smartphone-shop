@@ -3,51 +3,49 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAllProducts } from "../api/product"; // Đảm bảo đường dẫn đúng
 
-const categories = [
+const brands = [
   { id: "all", name: "Tất cả" },
-  { id: "iphone", name: "iPhone" },
-  { id: "watch", name: "Watch" },
-  { id: "ipad", name: "Ipad" },
-  { id: "samsung", name: "SamSung" },
-  { id: "smartphone", name: "Điện Thoại" },
+  { id: "Apple", name: "iPhone" },
+  { id: "samsung", name: "Samsung" },
+  { id: "xiaomi", name: "Xiaomi" },
+  { id: "oppo", name: "Oppo" },
 ];
 
 export default function ProductTabs() {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeBrand, setActiveBrand] = useState("all");
   const navigate = useNavigate();
 
   const {
-    data: products = [],
+    data: { products = [], total = 0, pages = 0 } = {},
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ["products", activeTab],
+    queryKey: ["products", activeBrand],
     queryFn: () =>
-      getAllProducts(activeTab === "all" ? {} : { category: activeTab }),
-    retry: 2, // Retry the query up to 2 times in case of failure
+      getAllProducts(
+        activeBrand === "all"
+          ? { limit: 1000 }
+          : { brand: activeBrand, limit: 1000 }
+      ),
+    retry: 2,
   });
-
-  const filteredProducts =
-    activeTab === "all"
-      ? products
-      : products.filter((product) => product.category === activeTab);
 
   return (
     <div className="max-w-6xl mx-auto p-4">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-300 overflow-x-auto">
-        {categories.map((category) => (
+      {/* Brand Filter */}
+      <div className="flex border-b border-gray-300 overflow-x-auto mb-4">
+        {brands.map((brand) => (
           <button
-            key={category.id}
+            key={brand.id}
             className={`px-4 py-2 font-medium whitespace-nowrap text-gray-700 border-b-2 ${
-              activeTab === category.id
+              activeBrand === brand.id
                 ? "border-blue-500 text-blue-500"
                 : "border-transparent hover:text-blue-500"
             } transition-colors duration-200`}
-            onClick={() => setActiveTab(category.id)}
+            onClick={() => setActiveBrand(brand.id)}
           >
-            {category.name}
+            {brand.name}
           </button>
         ))}
       </div>
@@ -62,42 +60,65 @@ export default function ProductTabs() {
           <p className="col-span-full text-center text-red-500">
             Lỗi tải dữ liệu sản phẩm: {error.message}
           </p>
-        ) : filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => (
-            <div
-              key={product._id}
-              className="p-3 border rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-white cursor-pointer flex flex-col items-center text-center"
-              onClick={() => navigate(`/product/${product._id}`)}
-            >
-              <div className="w-32 h-32 flex items-center justify-center">
-                <img
-                  src={product.variants?.[0]?.images[0]}
-                  alt={product.name}
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                />
-              </div>
-              <h3 className="text-sm sm:text-base font-semibold mt-3 line-clamp-2 h-12">
-                {product.name}
-              </h3>
-              <p className="text-red-500 font-bold text-base mt-1">
-                {product.price.toLocaleString()} ₫
-              </p>
-              <p
-                className={`text-sm font-semibold mt-2 ${
-                  product.variants?.[0]?.stock > 0
-                    ? "text-green-500"
-                    : "text-red-500"
-                }`}
-              >
-                {product.variants?.[0]?.stock > 0 ? "Còn hàng" : "Hết hàng"}
-              </p>
-            </div>
-          ))
+        ) : products.length > 0 ? (
+          products.map((product) => {
+            return product.variants.map((variant) => {
+              const imageUrl = variant.images?.[0]
+                ? variant.images[0].startsWith("http")
+                  ? variant.images[0] // Nếu đường dẫn đầy đủ
+                  : `http://localhost:3001${variant.images[0]}` // Đảm bảo thêm `localhost:3001`
+                : "/default-image.jpg"; // Nếu không có ảnh, sử dụng ảnh mặc định
+
+              return (
+                <div
+                  key={variant._id}
+                  className="p-3 border rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-white cursor-pointer flex flex-col items-center text-center"
+                  onClick={() => navigate(`/product/${product._id}`)}
+                >
+                  <div className="w-32 h-32 flex items-center justify-center">
+                    <img
+                      src={imageUrl}
+                      alt={product.name}
+                      className="max-w-full max-h-full object-contain rounded-lg"
+                    />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-semibold mt-3 line-clamp-2 h-12">
+                    {product.name}
+                  </h3>
+                  {/* Hiển thị dung lượng bộ nhớ */}
+                  <p className="text-gray-500 text-sm">
+                    Dung lượng: {variant.storage}
+                  </p>
+                  {/* Hiển thị giá sản phẩm */}
+                  <p className="text-red-500 font-bold text-base mt-1">
+                    {typeof variant.price === "number"
+                      ? variant.price.toLocaleString("vi-VN") + " ₫"
+                      : "Giá chưa cập nhật"}
+                  </p>
+                  {/* Hiển thị trạng thái hàng tồn kho */}
+                  <p
+                    className={`text-sm font-semibold mt-2 ${
+                      variant.stock > 0 ? "text-green-500" : "text-red-500"
+                    }`}
+                  >
+                    {variant.stock > 0 ? "Còn hàng" : "Hết hàng"}
+                  </p>
+                </div>
+              );
+            });
+          })
         ) : (
           <p className="text-gray-500 col-span-full text-center">
-            Không có sản phẩm nào thuộc danh mục này.
+            Không có sản phẩm nào thuộc thương hiệu này.
           </p>
         )}
+      </div>
+
+      {/* Pagination (thông tin thôi, không có nút chuyển trang) */}
+      <div className="flex justify-center mt-6">
+        <p className="text-sm text-gray-500 mt-2">
+          {total} sản phẩm | {pages} trang
+        </p>
       </div>
     </div>
   );

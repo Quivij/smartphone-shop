@@ -4,22 +4,21 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
   const [form, setForm] = useState({
     name: initialValues.name || "",
     description: initialValues.description || "",
-    price: initialValues.price || "",
     category: initialValues.category || "",
     brand: initialValues.brand || "",
     specifications: initialValues.specifications || {
       screen: "",
       cpu: "",
       ram: "",
-      storage: "",
       battery: "",
       camera: "",
       os: "",
     },
-    variants: initialValues.variants || [{ color: "", stock: "", images: [] }],
+    variants: initialValues.variants || [
+      { color: "", storage: "", price: "", stock: "", images: [] },
+    ],
   });
 
-  // Cập nhật state khi `initialValues` thay đổi
   useEffect(() => {
     if (isEdit) {
       setForm(initialValues);
@@ -48,14 +47,17 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
 
   const handleVariantImagesChange = (index, files) => {
     const updated = [...form.variants];
-    updated[index].images = Array.from(files); // Chuyển từ FileList → Array
+    updated[index].images = Array.from(files);
     setForm({ ...form, variants: updated });
   };
 
   const handleAddVariant = () => {
     setForm({
       ...form,
-      variants: [...form.variants, { color: "", stock: "", images: [] }],
+      variants: [
+        ...form.variants,
+        { color: "", storage: "", price: "", stock: "", images: [] },
+      ],
     });
   };
 
@@ -69,13 +71,7 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
     e.preventDefault();
     const formData = new FormData();
 
-    const requiredFields = [
-      "name",
-      "description",
-      "price",
-      "brand",
-      "category",
-    ];
+    const requiredFields = ["name", "description", "brand", "category"];
     for (let key of requiredFields) {
       if (!form[key]) {
         alert(`Trường ${key} là bắt buộc!`);
@@ -84,48 +80,33 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
       formData.append(key, form[key]);
     }
 
-    // Gửi specifications dưới dạng JSON string
     formData.append("specifications", JSON.stringify(form.specifications));
 
-    if (isEdit) {
-      // ✅ Logic cập nhật sản phẩm
-      const variantsToSend = form.variants.map((v) => ({
-        color: v.color,
-        stock: v.stock,
-        images: v.images.map((img) => img.name), // chỉ tên ảnh
-      }));
-      formData.append("variants", JSON.stringify(variantsToSend));
+    // ✅ Gửi variants dạng JSON
+    const variantsToSend = form.variants.map((v) => ({
+      color: v.color,
+      storage: v.storage,
+      price: v.price,
+      stock: v.stock,
+      images: v.images.map((img) => img.name), // Lưu tên ảnh khi backend yêu cầu
+    }));
+    formData.append("variants", JSON.stringify(variantsToSend));
 
-      form.variants.forEach((variant) => {
-        if (Array.isArray(variant.images)) {
-          variant.images.forEach((file) => {
-            formData.append("files", file); // upload tất cả ảnh vào 1 trường
-          });
-        }
-      });
-    } else {
-      // ✅ Logic tạo mới sản phẩm
-      form.variants.forEach((variant, i) => {
-        formData.append(`variants[${i}][color]`, variant.color);
-        formData.append(`variants[${i}][stock]`, variant.stock);
+    // ✅ Gửi toàn bộ ảnh trong field "files"
+    form.variants.forEach((variant) => {
+      if (Array.isArray(variant.images)) {
         variant.images.forEach((file) => {
-          formData.append(`variants[${i}][images]`, file);
+          formData.append("files", file); // Chuyển file trực tiếp, không phải tên file
         });
-      });
-    }
-
-    // Debug (tuỳ chọn)
-    for (let [key, val] of formData.entries()) {
-      console.log(`${key}:`, val);
-    }
+      }
+    });
 
     onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Thông tin cơ bản */}
-      {["name", "description", "price", "brand", "category"].map((field) => (
+      {["name", "description", "brand", "category"].map((field) => (
         <input
           key={field}
           name={field}
@@ -137,49 +118,38 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
         />
       ))}
 
-      {/* Specifications */}
       <div className="grid grid-cols-2 gap-2">
-        {["screen", "cpu", "ram", "storage", "battery", "camera", "os"].map(
-          (spec) => (
-            <input
-              key={spec}
-              name={spec}
-              placeholder={`Thông số: ${spec}`}
-              value={form.specifications[spec] || ""}
-              onChange={handleSpecsChange}
-              className="border p-2 rounded"
-            />
-          )
-        )}
+        {["screen", "cpu", "ram", "battery", "camera", "os"].map((spec) => (
+          <input
+            key={spec}
+            name={spec}
+            placeholder={`Thông số: ${spec}`}
+            value={form.specifications[spec] || ""}
+            onChange={handleSpecsChange}
+            className="border p-2 rounded"
+          />
+        ))}
       </div>
 
-      {/* Variants */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Biến thể sản phẩm (màu sắc)</h3>
+        <h3 className="font-semibold text-lg">Biến thể sản phẩm</h3>
         {form.variants.map((variant, index) => (
           <div
             key={index}
             className="border p-4 rounded-md bg-gray-50 relative space-y-2"
           >
-            <input
-              placeholder="Màu sắc"
-              value={variant.color}
-              onChange={(e) =>
-                handleVariantChange(index, "color", e.target.value)
-              }
-              className="w-full border p-2 rounded"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Tồn kho"
-              value={variant.stock}
-              onChange={(e) =>
-                handleVariantChange(index, "stock", e.target.value)
-              }
-              className="w-full border p-2 rounded"
-              required
-            />
+            {["color", "storage", "price", "stock"].map((field) => (
+              <input
+                key={field}
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                value={variant[field] || ""}
+                onChange={(e) =>
+                  handleVariantChange(index, field, e.target.value)
+                }
+                className="w-full border p-2 rounded"
+                required
+              />
+            ))}
             <input
               type="file"
               multiple

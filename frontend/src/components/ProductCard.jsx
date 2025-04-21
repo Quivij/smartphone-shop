@@ -1,58 +1,26 @@
-import React from "react";
+const ProductCard = ({ product }) => {
+  const firstVariant = product.variants?.[0];
 
-const ProductCard = React.memo(({ product }) => {
-  const {
-    name,
-    description,
-    price,
-    stock,
-    brand,
-    category,
-    images,
-    createdAt,
-  } = product;
-
-  const imageUrl = images?.[0]
-    ? `${import.meta.env.VITE_API_BASE_URL}${images[0]}`
-    : "https://via.placeholder.com/300";
-
-  // Xử lý trường hợp giá trị price không hợp lệ
-  const formattedPrice = price ? price.toLocaleString() : "Liên hệ";
-
-  // Kiểm tra createdAt để đảm bảo có giá trị hợp lệ
-  const formattedDate = createdAt
-    ? new Date(createdAt).toLocaleString("vi-VN")
-    : "Chưa xác định";
+  // Lấy ảnh đầu tiên hoặc dùng ảnh mặc định
+  const image = firstVariant?.images?.[0] || "/default.jpg";
 
   return (
-    <div className="rounded-xl shadow-md p-4 bg-white hover:shadow-lg transition flex flex-col">
+    <div className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition">
       <img
-        src={imageUrl}
-        alt={name}
-        className="w-full h-48 object-cover rounded-lg mb-3"
+        src={image.startsWith("http") ? image : `http://localhost:3001${image}`}
+        alt={product.name}
+        className="w-full h-48 object-cover bg-gray-100"
       />
-      <h2 className="text-lg font-semibold line-clamp-2">{name}</h2>
-      <p className="text-sm text-gray-600 line-clamp-2 mb-1">{description}</p>
-
-      <div className="text-sm text-gray-700">
-        Thương hiệu: <b>{brand}</b>
-      </div>
-      <div className="text-sm text-gray-700">
-        Danh mục: <b>{category}</b>
-      </div>
-      <div className="text-sm text-gray-700">
-        Tồn kho: <b>{stock}</b> sản phẩm
-      </div>
-
-      <div className="mt-2 text-blue-600 font-bold text-lg">
-        {formattedPrice}₫
-      </div>
-
-      <div className="text-xs text-gray-400 mt-auto">
-        Tạo lúc: {formattedDate}
+      <div className="p-4">
+        <h2 className="text-lg font-semibold text-gray-800 truncate">
+          {product.name}
+        </h2>
+        <p className="text-red-500 font-bold mt-1">
+          {(firstVariant?.price || 0).toLocaleString()}₫
+        </p>
       </div>
     </div>
   );
-});
+};
 
 export default ProductCard;
