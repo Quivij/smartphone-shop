@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/UserRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
 const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const path = require("path");
 
 // Load biến môi trường từ file .env
@@ -21,7 +22,7 @@ const app = express();
 app.use(
   cors({
     origin: "http://localhost:5173", // Frontend URL của bạn
-    methods: ["GET", "POST", "PUT", "DELETE"], // Các phương thức HTTP được phép
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Các phương thức HTTP được phép
     allowedHeaders: ["Content-Type", "Authorization"], // Các headers cho phép
     credentials: true, // Cho phép gửi cookie kèm theo yêu cầu
   })
@@ -33,6 +34,8 @@ app.use(morgan("dev")); // Ghi log request
 // Định nghĩa các routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Middleware xử lý lỗi

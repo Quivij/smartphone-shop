@@ -73,7 +73,7 @@ const ProfilePage = () => {
         const avatarUrl = data.user.avatar?.startsWith("http")
           ? data.user.avatar
           : data.user.avatar
-          ? `http://localhost:3001${data.user.avatar}?t=${new Date().getTime()}`
+          ? `http://localhost:3001${data.user.avatar}?t=${Date.now()}` // cache busting
           : avatarPreview;
 
         const updatedUser = {

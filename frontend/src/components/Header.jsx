@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLogout } from "../hooks/useLogout";
 import { useUserStore } from "../store/useUserStore";
 import SearchDropdown from "./SearchDropdown"; // điều chỉnh path nếu cần
+import { useCartStore } from "../store/useCartStore";
 
 const menuItems = [
   {
@@ -71,6 +72,7 @@ const menuItems = [
 
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const cartCount = useCartStore((state) => state.getCartCount());
 
   // Lấy user và avatar từ Zustand store
   const { user, clearUser } = useUserStore();
@@ -78,7 +80,7 @@ const Header = () => {
   const fullAvatarUrl = avatar?.startsWith("http")
     ? avatar
     : avatar
-    ? `http://localhost:3001${avatar}`
+    ? `http://localhost:3001${avatar}?t=${Date.now()}`
     : null;
 
   const { handleLogout } = useLogout();
@@ -142,9 +144,14 @@ const Header = () => {
           {/* Icons */}
           <div className="flex space-x-4 items-center">
             {/* Giỏ hàng và các icon khác */}
-            <div className="flex items-center space-x-2 cursor-pointer">
+            <div className="relative flex items-center space-x-2 cursor-pointer">
               <FaShoppingCart className="text-gray-600 text-xl" />
-              <p>Mua hàng</p>
+              <Link to="/cart">Giỏ hàng</Link>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {cartCount}
+                </span>
+              )}
             </div>
 
             {/* User */}
@@ -183,7 +190,7 @@ const Header = () => {
                           </Link>
                         </li>
                         <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                          <Link to="/orders" className="block w-full h-full">
+                          <Link to="/orders/my" className="block w-full h-full">
                             Đơn hàng
                           </Link>
                         </li>

@@ -16,15 +16,19 @@ import Unauthorized from "../pages/Unauthorized";
 import AdminLayout from "../layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
 import AdminProduct from "../pages/admin/Products";
-import Orders from "../pages/admin/Orders";
-
+import AdminOrdersPage from "../pages/admin/Orders";
+import CartPage from "../pages/CartPage";
 import CreateProduct from "../pages/admin/products/CreateProduct";
 import EditProduct from "../pages/admin/products/EditProduct";
 
 import AdminUser from "../pages/admin/AdminUser";
-
 import EditUser from "../pages/admin/users/EditUser";
 import CreateUserPage from "../pages/admin/users/CreateUserPage";
+
+// ✅ MỚI: Import các trang liên quan đến đặt hàng
+import CheckoutPage from "../pages/CheckoutPage";
+import MyOrdersPage from "../pages/MyOrdersPage";
+import OrderDetailPage from "../pages/OrderDetailPage";
 
 const AppRouter = () => {
   return (
@@ -40,6 +44,8 @@ const AppRouter = () => {
             element={<Products />}
           />
           <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="cart" element={<CartPage />} />
+
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="unauthorized" element={<Unauthorized />} />
@@ -52,6 +58,33 @@ const AppRouter = () => {
               </PrivateRoute>
             }
           />
+
+          {/* ✅ MỚI: Checkout và đơn hàng cá nhân */}
+          <Route
+            path="checkout"
+            element={
+              <PrivateRoute>
+                <CheckoutPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="orders/my"
+            element={
+              <PrivateRoute>
+                <MyOrdersPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="orders/:id"
+            element={
+              <PrivateRoute>
+                <OrderDetailPage />
+              </PrivateRoute>
+            }
+          />
+
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -70,13 +103,12 @@ const AppRouter = () => {
             <Route path="create" element={<CreateProduct />} />
             <Route path="edit/:id" element={<EditProduct />} />
           </Route>
-          <Route path="orders" element={<Orders />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="users">
             <Route index element={<AdminUser />} />
             <Route path="edit/:id" element={<EditUser />} />
             <Route path="create" element={<CreateUserPage />} />
           </Route>
-
           <Route path="*" element={<Dashboard />} />
         </Route>
       </Routes>

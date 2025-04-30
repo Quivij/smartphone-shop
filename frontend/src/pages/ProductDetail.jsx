@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Dialog } from "@headlessui/react";
 import ProductSlider from "../components/ProductSlider";
 import axios from "axios";
+import { useCartStore } from "../store/useCartStore";
 
 const fetchProductById = async (id) => {
   const res = await axios.get(`http://localhost:3001/api/products/${id}`);
@@ -29,6 +30,7 @@ const ProductDetail = () => {
   });
 
   const [currentVariant, setCurrentVariant] = useState(null);
+  const addToCart = useCartStore((state) => state.addToCart);
 
   // Update biến thể khi chọn màu hoặc bộ nhớ
   useEffect(() => {
@@ -153,10 +155,20 @@ const ProductDetail = () => {
 
           {/* Hành động */}
           <div className="mt-6 flex gap-4 flex-wrap">
-            <button className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold">
+            <button
+              className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold"
+              onClick={() =>
+                currentVariant && addToCart(product, currentVariant)
+              }
+            >
               Mua Ngay
             </button>
-            <button className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold">
+            <button
+              className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold"
+              onClick={() =>
+                currentVariant && addToCart(product, currentVariant)
+              }
+            >
               Thêm vào Giỏ
             </button>
             <button

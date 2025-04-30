@@ -115,6 +115,7 @@ const AdminProduct = () => {
           ? variant.price.toLocaleString("vi-VN") + "₫"
           : "Chưa có giá",
         "Tồn kho": variant.stock,
+        "Đã bán": variant.sold || 0,
         "Thương hiệu": product.brand,
         "Ngày tạo": product.createdAt
           ? new Date(product.createdAt).toLocaleDateString("vi-VN")

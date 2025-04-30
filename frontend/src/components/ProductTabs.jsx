@@ -83,11 +83,13 @@ export default function ProductTabs() {
                     />
                   </div>
                   <h3 className="text-sm sm:text-base font-semibold mt-3 line-clamp-2 h-12">
-                    {product.name}
+                    {/* Hiển thị tên sản phẩm với dung lượng bộ nhớ */}
+                    {`${product.name} ${variant.storage}`}
                   </h3>
-                  {/* Hiển thị dung lượng bộ nhớ */}
-                  <p className="text-gray-500 text-sm">
-                    Dung lượng: {variant.storage}
+                  {/* Hiển thị màu sắc */}
+                  <p className="text-gray-500 text-sm mt-1">
+                    Màu sắc:{" "}
+                    {variant.color ? variant.color : "Chưa có thông tin"}
                   </p>
                   {/* Hiển thị giá sản phẩm */}
                   <p className="text-red-500 font-bold text-base mt-1">
