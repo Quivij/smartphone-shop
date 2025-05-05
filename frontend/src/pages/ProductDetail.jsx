@@ -5,6 +5,9 @@ import { Dialog } from "@headlessui/react";
 import ProductSlider from "../components/ProductSlider";
 import axios from "axios";
 import { useCartStore } from "../store/useCartStore";
+import { motion, AnimatePresence } from "framer-motion";
+
+const MotionImg = motion.img;
 
 const fetchProductById = async (id) => {
   const res = await axios.get(`http://localhost:3001/api/products/${id}`);
@@ -76,32 +79,47 @@ const ProductDetail = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col md:flex-row gap-4">
-        {/* Ảnh chính */}
+        {/* Ảnh chính + Thumbnail */}
         <div className="flex-1 flex flex-col items-center">
-          <img
-            src={selectedImage || "/default-image.jpg"}
-            alt="Product"
-            className="w-64 h-auto"
-          />
-          <div className="flex space-x-2 mt-4">
-            {currentVariant?.images?.map((img, idx) => (
-              <img
-                key={img || idx} // Nếu mỗi ảnh có URL duy nhất, dùng URL làm key
-                src={
-                  img.startsWith("http") ? img : `http://localhost:3001${img}`
-                }
-                alt={`Thumb ${idx}`}
-                className="w-12 h-12 border-2 cursor-pointer"
-                onClick={() =>
-                  setSelectedImage(
-                    img.startsWith("http") ? img : `http://localhost:3001${img}`
-                  )
-                }
+          {/* Ảnh chính với hiệu ứng slide */}
+          <div className="relative w-full flex items-center justify-center h-[400px]">
+            <AnimatePresence mode="wait">
+              <MotionImg
+                key={selectedImage}
+                src={selectedImage || "/default-image.jpg"}
+                alt="Product"
+                className="max-h-full max-w-full object-contain rounded-xl shadow-md"
+                initial={{ x: 300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.4 }}
               />
-            ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Danh sách thumbnail */}
+          <div className="flex space-x-2 mt-4 overflow-x-auto">
+            {currentVariant?.images?.map((img, idx) => {
+              const fullImg = img.startsWith("http")
+                ? img
+                : `http://localhost:3001${img}`;
+
+              return (
+                <img
+                  key={fullImg || idx}
+                  src={fullImg}
+                  alt={`Thumb ${idx}`}
+                  className={`w-14 h-14 border-2 rounded-lg object-cover cursor-pointer transition-all duration-300 ${
+                    selectedImage === fullImg
+                      ? "border-red-500 scale-105"
+                      : "border-gray-300 hover:scale-105"
+                  }`}
+                  onClick={() => setSelectedImage(fullImg)}
+                />
+              );
+            })}
           </div>
         </div>
-
         {/* Thông tin sản phẩm */}
         <div className="flex-1 p-4">
           <h1 className="text-2xl font-bold mb-2">{product.name}</h1>

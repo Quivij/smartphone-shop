@@ -9,6 +9,8 @@ const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const path = require("path");
 
+const chatbotRoutes = require("./routes/chatbot");
+
 // Load biến môi trường từ file .env
 dotenv.config();
 
@@ -35,6 +37,7 @@ app.use(morgan("dev")); // Ghi log request
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

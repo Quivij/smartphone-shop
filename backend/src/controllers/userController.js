@@ -92,15 +92,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Mật khẩu không đúng" });
     }
 
-    // Kiểm tra xem người dùng có xác thực email không
-    // if (!user.isVerified) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "Vui lòng xác thực email của bạn" });
-    // }
-
     // Tạo JWT token
-    // Tạo token
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -111,12 +103,14 @@ const loginUser = async (req, res) => {
       sameSite: "Strict",
     });
 
+    // Trả về thông tin người dùng cùng với avatar
     res.status(200).json({
       message: "Đăng nhập thành công",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar || "/default-avatar.png", // trả về avatar nếu có
         isAdmin: user.isAdmin,
       },
       accessToken,
@@ -138,11 +132,12 @@ const getUserInfo = async (req, res) => {
       return res.status(404).json({ message: "Người dùng không tìm thấy" });
     }
 
-    // Trả về thông tin người dùng mà không có mật khẩu
+    // Trả về thông tin người dùng bao gồm avatar
     res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
+      avatar: user.avatar || "/default-avatar.png", // trả về avatar nếu có
       isAdmin: user.isAdmin,
     });
   } catch (error) {
@@ -150,6 +145,7 @@ const getUserInfo = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 const getAllUsers = async (req, res) => {
   try {
     const { search = "", isAdmin = "all", page = 1, limit = 10 } = req.query;
@@ -278,7 +274,8 @@ const getMyProfile = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const isAdmin = req.user.isAdmin;
-    const userId = isAdmin ? req.params.id : req.user.id;
+    const userId = req.params.id || req.user.id; // ✅ Sửa tại đây
+
     const { name, email, phone, address, isAdmin: updatedIsAdmin } = req.body;
 
     let updateData = { name, email, phone, address };
@@ -299,6 +296,12 @@ const updateUser = async (req, res) => {
       runValidators: true,
     }).select("-password");
 
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy người dùng để cập nhật." });
+    }
+
     res.status(200).json({
       message: "Cập nhật người dùng thành công!",
       user: updatedUser,
@@ -308,6 +311,7 @@ const updateUser = async (req, res) => {
     res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật người dùng." });
   }
 };
+
 const createUser = async (req, res) => {
   try {
     const { name, email, password, phone, address, isAdmin } = req.body;
@@ -347,6 +351,103 @@ const getAllUsersRaw = async (req, res) => {
   }
 };
 
+const loginWithGoogle = async (req, res) => {
+  const { token: googleToken } = req.body;
+
+  if (!googleToken)
+    return res.status(400).json({ message: "Thiếu token từ Google" });
+
+  try {
+    // Gửi yêu cầu xác minh tới Google
+    const googleRes = await axios.get(
+      `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${googleToken}`
+    );
+
+    const { email, name, picture, sub } = googleRes.data;
+
+    // Tìm user theo email
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Nếu chưa có user, tạo mới
+      user = await User.create({
+        name,
+        email,
+        avatar: picture,
+        provider: "google",
+        providerId: sub,
+        password: null, // Vì không dùng mật khẩu
+      });
+    }
+
+    // Tạo access token
+    const accessToken = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Đăng nhập Google thành công",
+      user,
+      accessToken,
+    });
+  } catch (error) {
+    console.error("Lỗi Google Login:", error.response?.data || error.message);
+    res.status(401).json({ message: "Xác thực Google thất bại" });
+  }
+};
+const loginWithFacebook = async (req, res) => {
+  const { accessToken, userID } = req.body;
+
+  if (!accessToken || !userID)
+    return res.status(400).json({ message: "Thiếu thông tin từ Facebook" });
+
+  try {
+    // Gọi Graph API để lấy thông tin user
+    const fbRes = await axios.get(
+      `https://graph.facebook.com/v12.0/${userID}`,
+      {
+        params: {
+          access_token: accessToken,
+          fields: "id,name,email,picture",
+        },
+      }
+    );
+
+    const { email, name, id, picture } = fbRes.data;
+
+    // Tìm hoặc tạo user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        avatar: picture.data.url,
+        provider: "facebook",
+        providerId: id,
+        password: null,
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Đăng nhập Facebook thành công",
+      user,
+      accessToken: token,
+    });
+  } catch (error) {
+    console.error("Lỗi Facebook Login:", error.response?.data || error.message);
+    res.status(401).json({ message: "Xác thực Facebook thất bại" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -360,4 +461,6 @@ module.exports = {
   createUser,
   getMyProfile,
   getAllUsersRaw,
+  loginWithGoogle,
+  loginWithFacebook,
 };

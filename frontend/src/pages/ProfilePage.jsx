@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useFetchProfile } from "../hooks/useFetchProfile";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
-import { useUserStore } from "../store/useUserStore"; // Đảm bảo import đúng
+import { useUserStore } from "../store/useUserStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify"; // Import react-toastify
+import { toast } from "react-toastify";
 
 const ProfilePage = () => {
   const { setUser, user } = useUserStore();
@@ -25,28 +25,21 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (profileData) {
-      setFormData({
-        name: profileData.name || "",
-        email: profileData.email || "",
-        phone: profileData.phone || "",
-        address: profileData.address || "",
-        avatar: profileData.avatar || null,
-      });
-      setAvatarPreview(
-        profileData.avatar ? `http://localhost:3001${profileData.avatar}` : ""
-      );
+      const { name, email, phone, address, avatar } = profileData;
+      setFormData({ name, email, phone, address, avatar });
+      setAvatarPreview(avatar ? `http://localhost:3001${avatar}` : "");
     }
   }, [profileData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, avatar: file });
+      setFormData((prev) => ({ ...prev, avatar: file }));
       setAvatarPreview(URL.createObjectURL(file));
     }
   };
@@ -73,22 +66,21 @@ const ProfilePage = () => {
         const avatarUrl = data.user.avatar?.startsWith("http")
           ? data.user.avatar
           : data.user.avatar
-          ? `http://localhost:3001${data.user.avatar}?t=${Date.now()}` // cache busting
+          ? `http://localhost:3001${data.user.avatar}?t=${Date.now()}`
           : avatarPreview;
 
         const updatedUser = {
-          ...user, // giữ thông tin cũ (nếu có)
-          ...data.user, // cập nhật toàn bộ dữ liệu mới từ server
-          avatar: avatarUrl, // override avatar để chắc chắn link đầy đủ
+          ...user,
+          ...data.user,
+          avatar: avatarUrl,
         };
 
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
 
         toast.success("Cập nhật thông tin thành công!");
-        navigate("/"); // Di chuyển về trang chính hoặc trang cần thiết sau khi cập nhật
+        navigate("/");
       },
-
       onError: () => {
         toast.error("Cập nhật thông tin thất bại, thử lại!");
       },
@@ -98,11 +90,18 @@ const ProfilePage = () => {
   if (isLoading) return <div>Đang tải thông tin...</div>;
   if (isError) return <div>Lỗi tải thông tin. Vui lòng thử lại sau!</div>;
 
+  const formFields = [
+    { label: "Họ và tên", name: "name", type: "text", autoFocus: true },
+    { label: "Email", name: "email", type: "email" },
+    { label: "Số điện thoại", name: "phone", type: "text" },
+    { label: "Địa chỉ", name: "address", type: "text" },
+  ];
+
   return (
     <div className="max-w-xl mx-auto mt-8 p-4 bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-4 text-center">Thông tin cá nhân</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Avatar Preview */}
+        {/* Avatar */}
         <div onClick={handleAvatarClick} className="cursor-pointer">
           {avatarPreview ? (
             <img
@@ -121,7 +120,6 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Upload Avatar (Hidden Input) */}
         <input
           id="avatar-input"
           type="file"
@@ -130,13 +128,8 @@ const ProfilePage = () => {
           className="hidden"
         />
 
-        {/* Form fields */}
-        {[
-          { label: "Họ và tên", name: "name", type: "text" },
-          { label: "Email", name: "email", type: "email" },
-          { label: "Số điện thoại", name: "phone", type: "text" },
-          { label: "Địa chỉ", name: "address", type: "text" },
-        ].map(({ label, name, type }) => (
+        {/* Input Fields */}
+        {formFields.map(({ label, name, type, autoFocus }) => (
           <div key={name}>
             <label className="block mb-1">{label}:</label>
             <input
@@ -144,6 +137,8 @@ const ProfilePage = () => {
               name={name}
               value={formData[name]}
               onChange={handleChange}
+              placeholder={`Nhập ${label.toLowerCase()}`}
+              autoFocus={autoFocus}
               className="w-full border rounded px-3 py-2"
             />
           </div>

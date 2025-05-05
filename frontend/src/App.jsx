@@ -1,6 +1,7 @@
 import AppRouter from "./routes/AppRouter";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ChatbotWidget from "./components/ChatbotWidget";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         pauseOnHover
         draggable
       />
+      <ChatbotWidget />
     </>
   );
 }

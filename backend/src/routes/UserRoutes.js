@@ -48,8 +48,8 @@ router.get("/:userId", authMiddleware, isAdmin, getUserDetail);
 // Cập nhật thông tin người dùng (dành cho người dùng đăng nhập hoặc admin)
 router.put(
   "/profile",
+  uploadAvatar.single("avatar"), // Đưa multer lên trước
   authMiddleware,
-  uploadAvatar.single("avatar"),
   updateUser
 );
 

@@ -5,10 +5,15 @@ import { getAllProducts } from "../api/product"; // Đảm bảo đường dẫn
 
 const brands = [
   { id: "all", name: "Tất cả" },
-  { id: "Apple", name: "iPhone" },
-  { id: "samsung", name: "Samsung" },
-  { id: "xiaomi", name: "Xiaomi" },
-  { id: "oppo", name: "Oppo" },
+  { id: "Apple", name: "Apple" },
+  { id: "Samsung", name: "Samsung" },
+  { id: "Xiaomi", name: "Xiaomi" },
+  { id: "Oppo", name: "Oppo" },
+  { id: "Realme", name: "Realme" },
+  { id: "HONOR", name: "HONOR" },
+  { id: "Itel", name: "Itel" },
+  { id: "Nokia", name: "Nokia" },
+  { id: "Vivo", name: "Vivo" },
 ];
 
 export default function ProductTabs() {

@@ -1,6 +1,8 @@
 const Product = require("../models/Product");
 const path = require("path");
 
+const { spawn } = require("child_process");
+
 // Tạo sản phẩm mới
 exports.createProduct = async (req, res) => {
   try {
@@ -253,6 +255,7 @@ exports.getProducts = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 exports.searchProduct = async (req, res) => {
   const { query } = req.query;
   try {
