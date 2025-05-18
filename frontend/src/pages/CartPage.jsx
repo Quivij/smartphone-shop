@@ -56,7 +56,9 @@ const CartPage = () => {
               />
 
               <div className="flex-1">
-                <h2 className="font-semibold text-lg">{item.name}</h2>
+                <h2 className="font-semibold text-lg">
+                  {item.name} Chính hãng VN/A
+                </h2>
                 <p className="text-sm text-gray-600">
                   Màu: {item.color} | Dung lượng: {item.storage}
                 </p>

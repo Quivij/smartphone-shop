@@ -9,64 +9,23 @@ import { useCartStore } from "../store/useCartStore";
 const menuItems = [
   {
     label: "iPhone",
-    link: "/products/iphone",
-    subMenu: [
-      { label: "iPhone 16 Series", link: "/products/iphone/16series" },
-      { label: "iPhone 15 Series", link: "/products/iphone/15series" },
-      { label: "iPhone 14", link: "/products/iphone/14series" },
-      { label: "iPhone 13", link: "/products/iphone/13series" },
-    ],
+    link: "/products/Apple",
   },
   {
     label: "Samsung",
-    link: "/products/samsung",
-    subMenu: [
-      {
-        label: "Galaxy S24 Ultra",
-        link: "/products/samsung-s24-ultra",
-        new: true,
-      },
-      { label: "Galaxy S23 Ultra", link: "/products/samsung-s23-ultra" },
-      { label: "Galaxy Z Flip 5", link: "/products/samsung-z-flip5" },
-      { label: "Galaxy Z Fold 5", link: "/products/samsung-z-fold5" },
-      { label: "Galaxy A Series", link: "/products/samsung-a-series" },
-    ],
+    link: "/products/Samsung",
   },
   {
-    label: "iPad",
-    link: "/products/ipad",
-    subMenu: [
-      { label: "iPad Pro", link: "/products/ipad/ipad-pro" },
-      { label: "iPad Air M3", link: "/products/ipad/ipad-air-m3", new: true },
-      { label: "iPad Air M2", link: "/products/ipad/ipad-air-m2" },
-      {
-        label: "iPad Gen 11 A16",
-        link: "/products/ipad/ipad-gen-11",
-        new: true,
-      },
-      { label: "iPad Gen 10", link: "/products/ipad/ipad-gen-10" },
-      { label: "iPad Gen 9", link: "/products/ipad/ipad-gen-9" },
-      { label: "iPad mini", link: "/products/ipad/ipad-mini" },
-    ],
+    label: "Oppo",
+    link: "/products/Oppo",
   },
   {
-    label: "Watch",
-    link: "/products/watch",
-    subMenu: [
-      { label: "Apple Watch S10", link: "/products/apple-watch-s10" },
-      { label: "Apple Watch Ultra", link: "/products/apple-watch-ultra" },
-      { label: "Apple Watch S9", link: "/products/apple-watch-s9" },
-      { label: "Apple Watch SE", link: "/products/apple-watch-se" },
-    ],
+    label: "Realme",
+    link: "/products/Realme",
   },
   {
-    label: "Điện thoại",
-    link: "/products/dienthoai",
-    subMenu: [
-      { label: "Nokia", link: "/products/nokia" },
-      { label: "Itel", link: "/products/itel" },
-      { label: "Realme", link: "/products/realme" },
-    ],
+    label: "Vivo",
+    link: "/products/Vivo",
   },
 ];
 

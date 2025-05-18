@@ -7,9 +7,10 @@ const userRoutes = require("./routes/UserRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
-const path = require("path");
+const chatbot = require("./routes/chatbot");
+const session = require("express-session");
 
-const chatbotRoutes = require("./routes/chatbot");
+const path = require("path");
 
 // Load biến môi trường từ file .env
 dotenv.config();
@@ -25,8 +26,16 @@ app.use(
   cors({
     origin: "http://localhost:5173", // Frontend URL của bạn
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Các phương thức HTTP được phép
-    allowedHeaders: ["Content-Type", "Authorization"], // Các headers cho phép
+    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"], // Các headers cho phép
     credentials: true, // Cho phép gửi cookie kèm theo yêu cầu
+  })
+);
+app.use(
+  session({
+    secret: "your-secret-key", // Dùng một chuỗi ngẫu nhiên cho bảo mật
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set to true nếu bạn sử dụng HTTPS
   })
 );
 
@@ -37,7 +46,7 @@ app.use(morgan("dev")); // Ghi log request
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/chatbot", chatbot);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

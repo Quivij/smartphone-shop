@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../store/useCartStore";
 import { useCreateOrder } from "../hooks/useCreateOrder";
-import { toast } from "react-toastify"; // ✅ Đúng thư viện bạn đang dùng
+import { toast } from "react-toastify";
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCartStore();
@@ -45,18 +45,27 @@ const CheckoutPage = () => {
       totalPrice,
     };
 
-    toast.info("Đang xử lý đơn hàng...");
+    const toastId = toast.loading("Đang xử lý đơn hàng...");
 
     createOrder(orderData, {
       onSuccess: () => {
         clearCart();
-        toast.success("Đặt hàng thành công!");
+        toast.update(toastId, {
+          render: "Đặt hàng thành công!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
         navigate("/orders/my");
       },
       onError: (err) => {
-        toast.error(
-          err?.response?.data?.message || "Lỗi đặt hàng, vui lòng thử lại."
-        );
+        toast.update(toastId, {
+          render:
+            err?.response?.data?.message || "Lỗi đặt hàng, vui lòng thử lại.",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
       },
     });
   };
@@ -65,18 +74,23 @@ const CheckoutPage = () => {
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">Thông tin giao hàng</h2>
 
-      {["fullName", "phone", "address", "city", "district", "ward"].map(
-        (field) => (
-          <input
-            key={field}
-            name={field}
-            placeholder={field}
-            value={shippingInfo[field]}
-            onChange={handleInputChange}
-            className="w-full border p-2 mb-2"
-          />
-        )
-      )}
+      {[
+        { name: "fullName", placeholder: "Họ và tên" },
+        { name: "phone", placeholder: "Số điện thoại" },
+        { name: "address", placeholder: "Địa chỉ" },
+        { name: "city", placeholder: "Thành phố" },
+        { name: "district", placeholder: "Quận/Huyện" },
+        { name: "ward", placeholder: "Phường/Xã" },
+      ].map(({ name, placeholder }) => (
+        <input
+          key={name}
+          name={name}
+          placeholder={placeholder}
+          value={shippingInfo[name]}
+          onChange={handleInputChange}
+          className="w-full border p-2 mb-2"
+        />
+      ))}
 
       <div className="mb-4">
         <label className="font-medium">Phương thức thanh toán:</label>

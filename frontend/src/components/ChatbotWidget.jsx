@@ -1,27 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ChatbotWidget() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState("");
+  const messagesEndRef = useRef(null);
+
+  // Khởi tạo sessionId
+  useEffect(() => {
+    let stored = localStorage.getItem("sessionId");
+    if (!stored) {
+      stored = crypto.randomUUID();
+      localStorage.setItem("sessionId", stored);
+    }
+    setSessionId(stored);
+  }, []);
+
+  // Tự động cuộn xuống khi có tin nhắn mới
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const res = await fetch("http://localhost:3001/api/chatbot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: input }),
-    });
-
-    const data = await res.json();
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: input },
-      { role: "bot", text: data.reply },
-    ]);
+    const userMessage = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+
+    try {
+      const res = await fetch("http://localhost:3001/api/chatbot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input, sessionId }),
+      });
+
+      const data = await res.json();
+      const botMessage = { role: "bot", text: data.reply };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("❌ Gửi thất bại:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", text: "⚠️ Lỗi máy chủ, vui lòng thử lại sau." },
+      ]);
+    }
   };
 
   const handleBotClick = (text) => {
@@ -34,7 +61,7 @@ export default function ChatbotWidget() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Nút tròn với icon Messenger */}
+      {/* Nút mở/đóng */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
@@ -49,20 +76,21 @@ export default function ChatbotWidget() {
         </svg>
       </button>
 
-      {/* Hộp thoại chat */}
+      {/* Hộp chat */}
       {isOpen && (
         <div className="w-96 h-[500px] bg-white rounded-2xl shadow-2xl p-4 flex flex-col mt-4">
           <h2 className="text-lg font-semibold text-blue-600 mb-2">
-            Tư vấn sản phẩm
+            🤖 Tư vấn sản phẩm
           </h2>
-          <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+
+          <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1">
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`text-sm p-2 max-w-[80%] rounded-xl cursor-pointer ${
+                className={`text-sm p-2 max-w-[80%] rounded-xl whitespace-pre-line break-words ${
                   msg.role === "user"
                     ? "bg-blue-100 self-end text-right"
-                    : "bg-gray-100 self-start"
+                    : "bg-gray-100 self-start cursor-pointer hover:bg-gray-200"
                 }`}
                 onClick={() =>
                   msg.role === "bot" ? handleBotClick(msg.text) : null
@@ -71,13 +99,15 @@ export default function ChatbotWidget() {
                 {msg.text}
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
+
           <div className="flex">
             <input
               className="flex-1 border rounded-l-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhập câu hỏi..."
+              placeholder="Nhập câu hỏi về sản phẩm..."
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
             <button

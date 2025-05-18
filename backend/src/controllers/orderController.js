@@ -30,9 +30,10 @@ const createOrder = async (req, res) => {
 // [GET] /api/orders/my - Lấy đơn hàng của người dùng hiện tại
 const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user.id }).sort({
-      createdAt: -1,
-    });
+    const orders = await Order.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate("orderItems.product", "name"); // Chỉ lấy trường name của product
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: "Không thể lấy đơn hàng của bạn", error });
@@ -67,17 +68,15 @@ const getAllOrders = async (req, res) => {
 // [GET] /api/orders/:id - Lấy chi tiết đơn hàng
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate(
-      "user",
-      "name email"
-    );
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("orderItems.product"); // Giả sử orderItems có trường product để lấy thông tin sản phẩm
 
     if (!order) {
       return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
 
     const isOwner = order.user._id.toString() === req.user.id;
-
     if (!req.user.isAdmin && !isOwner) {
       return res
         .status(403)

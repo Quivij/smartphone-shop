@@ -120,13 +120,11 @@ const OrderDetailPage = () => {
             className="border p-4 mb-4 rounded-lg shadow-sm bg-white"
           >
             <div className="flex items-center mb-2">
-              <img
-                src={item.image || "/no-image.png"}
-                alt={item.name}
-                className="w-20 h-20 object-cover rounded-md border"
-              />
+              {/* Thay hình ảnh bằng tên sản phẩm */}
               <div className="ml-4 flex-1">
-                <div className="font-semibold text-lg">{item.name}</div>
+                <div className="font-semibold text-lg">
+                  {item.product?.name || "Sản phẩm"}
+                </div>
                 <div className="text-sm text-gray-600">
                   Màu: {item.color} | Dung lượng: {item.storage}
                 </div>

@@ -1,9 +1,8 @@
 const Product = require("../models/Product");
 const path = require("path");
 
-const { spawn } = require("child_process");
+const slugify = require("slugify");
 
-// Tạo sản phẩm mới
 exports.createProduct = async (req, res) => {
   try {
     let { name, description, brand, category, specifications, variants } =
@@ -26,12 +25,13 @@ exports.createProduct = async (req, res) => {
       }
     }
 
+    // Upload ảnh
     const uploadedImages = req.files || [];
     let imagePaths = uploadedImages.map(
       (file) => `/uploads/products/${file.filename}`
     );
 
-    // Gán ảnh cho từng biến thể đúng cách
+    // Gán ảnh cho từng biến thể
     if (Array.isArray(variants)) {
       variants = variants.map((variant) => {
         const numImages = variant.images?.length || 0;
@@ -47,8 +47,19 @@ exports.createProduct = async (req, res) => {
       });
     }
 
+    // ✅ Tạo slug và đảm bảo không trùng
+    let baseSlug = slugify(name, { lower: true });
+    let slug = baseSlug;
+    let count = 1;
+
+    while (await Product.findOne({ slug })) {
+      slug = `${baseSlug}-${count}`;
+      count++;
+    }
+
     const product = new Product({
       name,
+      slug, // ✅ thêm slug vào
       description,
       brand,
       category,
@@ -78,9 +89,17 @@ exports.getProducts = async (req, res) => {
     } = req.query;
 
     let filter = {};
+
     if (category) filter.category = category;
-    if (brand) filter.brand = brand;
-    if (search) filter.name = { $regex: search, $options: "i" };
+
+    if (brand && brand !== "all") {
+      filter.brand = { $regex: `^${brand}$`, $options: "i" };
+    }
+
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
+
     if (minPrice || maxPrice) {
       filter.finalPrice = {};
       if (minPrice) filter.finalPrice.$gte = Number(minPrice);
@@ -94,7 +113,7 @@ exports.getProducts = async (req, res) => {
 
     // Tìm sản phẩm
     const products = await Product.find(filter)
-      .select("name price finalPrice category brand images") // Chọn các trường cần thiết
+      .select("name price finalPrice category brand images variants") // => cần "variants" để frontend render
       .skip((page - 1) * limit)
       .limit(Number(limit));
 

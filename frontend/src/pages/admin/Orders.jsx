@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../../api/api";
+import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { utils, writeFile } from "xlsx";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../../api/api";
 
 const AdminOrdersPage = () => {
   const queryClient = useQueryClient();
@@ -21,9 +22,6 @@ const AdminOrdersPage = () => {
   });
 
   const orders = data?.orders ?? [];
-
-  const cellClass = "px-4 py-3 border-r border-gray-200 text-sm";
-  const lastCellClass = "px-4 py-3 text-sm";
 
   const deliverMutation = useMutation({
     mutationFn: (id) =>
@@ -83,6 +81,32 @@ const AdminOrdersPage = () => {
     writeFile(wb, "DanhSachDonHang.xlsx");
   };
 
+  const getBadgeClass = (type, value) => {
+    const base = "px-2 py-1 rounded-full text-xs font-medium";
+    if (type === "status") {
+      return `${base} ${
+        value === "Cancelled"
+          ? "bg-gray-300 text-gray-800"
+          : value === "Delivered"
+          ? "bg-green-100 text-green-800"
+          : "bg-blue-100 text-blue-800"
+      }`;
+    }
+    if (type === "payment") {
+      return `${base} ${
+        value === "paid"
+          ? "bg-green-100 text-green-800"
+          : "bg-yellow-100 text-yellow-800"
+      }`;
+    }
+    if (type === "delivery") {
+      return `${base} ${
+        value ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+      }`;
+    }
+    return base;
+  };
+
   return (
     <div className="p-6">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -110,83 +134,67 @@ const AdminOrdersPage = () => {
         <div className="text-center text-gray-600 py-4">Đang tải...</div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-lg shadow border">
-          <table className="min-w-full border-separate border-spacing-0">
-            <thead className="bg-gray-100 text-gray-700">
+          <table className="min-w-full text-sm text-left border-collapse">
+            <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
               <tr>
-                <th className={cellClass}>Mã đơn</th>
-                <th className={cellClass}>Người mua</th>
-                <th className={cellClass}>Tổng tiền</th>
-                <th className={cellClass}>Phương thức</th>
-                <th className={cellClass}>Ngày tạo</th>
-                <th className={cellClass}>Thanh toán</th>
-                <th className={cellClass}>Giao hàng</th>
-                <th className={cellClass}>Trạng thái</th>
-                <th className={lastCellClass}>Hành động</th>
+                <th className="p-3 border">Mã đơn</th>
+                <th className="p-3 border">Người mua</th>
+                <th className="p-3 border">Tổng tiền</th>
+                <th className="p-3 border">Phương thức</th>
+                <th className="p-3 border">Ngày tạo</th>
+                <th className="p-3 border">Thanh toán</th>
+                <th className="p-3 border">Giao hàng</th>
+                <th className="p-3 border">Trạng thái</th>
+                <th className="p-3 border">Hành động</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="9"
-                    className="px-6 py-4 text-center text-gray-500"
-                  >
+                  <td colSpan="9" className="text-center py-4 text-gray-500">
                     Không tìm thấy đơn hàng nào.
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
                   <tr key={order._id} className="border-t hover:bg-gray-50">
-                    <td className={cellClass}>
+                    <td className="p-3 border">
                       #{order._id.slice(-6).toUpperCase()}
                     </td>
-                    <td className={cellClass}>{order.user?.name}</td>
-                    <td className={cellClass}>
+                    <td className="p-3 border">{order.user?.name}</td>
+                    <td className="p-3 border text-red-600 font-semibold">
                       {order.totalPrice.toLocaleString()}₫
                     </td>
-                    <td className={cellClass}>{order.paymentMethod}</td>
-                    <td className={cellClass}>
+                    <td className="p-3 border">{order.paymentMethod}</td>
+                    <td className="p-3 border">
                       {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className={cellClass}>
+                    <td className="p-3 border">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.paymentStatus === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={getBadgeClass(
+                          "payment",
+                          order.paymentStatus
+                        )}
                       >
                         {order.paymentStatus === "paid"
                           ? "Đã thanh toán"
                           : "Chưa thanh toán"}
                       </span>
                     </td>
-                    <td className={cellClass}>
+                    <td className="p-3 border">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.isDelivered
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={getBadgeClass("delivery", order.isDelivered)}
                       >
                         {order.isDelivered ? "Đã giao" : "Chưa giao"}
                       </span>
                     </td>
-                    <td className={cellClass}>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === "Cancelled"
-                            ? "bg-gray-200 text-gray-800"
-                            : order.status === "Delivered"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
+                    <td className="p-3 border">
+                      <span className={getBadgeClass("status", order.status)}>
                         {order.status}
                       </span>
                     </td>
-                    <td className={lastCellClass}>
-                      <div className="flex flex-wrap gap-1">
+                    <td className="p-3 border">
+                      <div className="flex flex-wrap gap-2">
                         {order.paymentStatus !== "paid" &&
                           order.status !== "Cancelled" && (
                             <button
@@ -197,21 +205,27 @@ const AdminOrdersPage = () => {
                             </button>
                           )}
                         {!order.isDelivered && order.status !== "Cancelled" && (
-                          <button
-                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded"
-                            onClick={() => deliverMutation.mutate(order._id)}
-                          >
-                            Đánh dấu giao hàng
-                          </button>
+                          <>
+                            <button
+                              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded"
+                              onClick={() => deliverMutation.mutate(order._id)}
+                            >
+                              Đánh dấu giao hàng
+                            </button>
+                            <button
+                              className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
+                              onClick={() => cancelMutation.mutate(order._id)}
+                            >
+                              Hủy đơn
+                            </button>
+                          </>
                         )}
-                        {!order.isDelivered && order.status !== "Cancelled" && (
-                          <button
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded"
-                            onClick={() => cancelMutation.mutate(order._id)}
-                          >
-                            Hủy đơn
-                          </button>
-                        )}
+                        <Link
+                          to={`/admin/orders/${order._id}`}
+                          className="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded"
+                        >
+                          Xem
+                        </Link>
                       </div>
                     </td>
                   </tr>

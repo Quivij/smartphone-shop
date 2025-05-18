@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// Tiện ích nhỏ kiểm tra đăng nhập
-// const isLoggedIn = () => {
-//   return !!localStorage.getItem("token");
-// };
-
 export const useCartStore = create(
   persist(
     (set, get) => ({
@@ -14,7 +9,7 @@ export const useCartStore = create(
       addToCart: (product, variant) => {
         if (!product || !variant) return;
 
-        const cartItems = Array.isArray(get().cartItems) ? get().cartItems : [];
+        const cartItems = get().cartItems;
 
         const existingIndex = cartItems.findIndex(
           (item) =>
@@ -35,7 +30,11 @@ export const useCartStore = create(
                 productId: product._id,
                 name: product.name,
                 price: variant.price,
-                image: `http://localhost:3001${variant.images[0]}`,
+                // Kiểm tra và gán ảnh sản phẩm nếu hợp lệ
+                image:
+                  variant.images && variant.images.length > 0
+                    ? `http://localhost:3001${variant.images[0]}`
+                    : "default-image.jpg", // Đặt ảnh mặc định nếu không có ảnh
                 color: variant.color,
                 storage: variant.storage,
                 quantity: 1,
@@ -74,37 +73,18 @@ export const useCartStore = create(
 
       getCartCount: () => {
         const cartItems = get().cartItems;
-        return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        return cartItems
+          ? cartItems.reduce((sum, item) => sum + item.quantity, 0)
+          : 0;
       },
-      clearCart: () => set({ cartItems: [] }),
 
-      // Loại bỏ các hàm đồng bộ với backend
-      // syncCartWithBackend: async () => {
-      //   if (!isLoggedIn()) {
-      //     console.warn("Chưa đăng nhập, không thể đồng bộ giỏ hàng từ server.");
-      //     return;
-      //   }
-      //   ...
-      // },
-
-      // syncCartToBackend: async () => {
-      //   if (!isLoggedIn()) {
-      //     console.warn("Chưa đăng nhập, không thể đồng bộ giỏ hàng lên server.");
-      //     return;
-      //   }
-      //   ...
-      // },
-
-      // checkoutCart: async () => {
-      //   if (!isLoggedIn()) {
-      //     console.warn("Chưa đăng nhập, không thể thanh toán.");
-      //     return;
-      //   }
-      //   ...
-      // },
+      clearCart: () => {
+        set({ cartItems: [] });
+        localStorage.removeItem("cart-storage"); // Xóa dữ liệu giỏ hàng trong localStorage
+      },
     }),
     {
-      name: "cart-storage", // lưu localStorage
+      name: "cart-storage", // Lưu trữ giỏ hàng trong localStorage
     }
   )
 );

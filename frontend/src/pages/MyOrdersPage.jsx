@@ -72,14 +72,14 @@ const MyOrdersPage = () => {
             {/* Danh sách sản phẩm trong đơn */}
             <div className="border-t pt-3 mt-3">
               {order.orderItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-4 mb-3">
-                  <img
-                    src={item.image || "/no-image.png"}
-                    alt={item.name}
-                    className="w-14 h-14 object-cover border rounded"
-                  />
+                <div
+                  key={idx}
+                  className="flex justify-between items-center mb-3"
+                >
                   <div className="flex-1">
-                    <div className="font-medium">{item.name}</div>
+                    <div className="font-medium">
+                      {item.product?.name || "Sản phẩm"}
+                    </div>
                     <div className="text-sm text-gray-600">
                       Màu: {item.color} | Dung lượng: {item.storage}
                     </div>

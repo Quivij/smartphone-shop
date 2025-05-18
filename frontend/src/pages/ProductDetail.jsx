@@ -122,7 +122,9 @@ const ProductDetail = () => {
         </div>
         {/* Thông tin sản phẩm */}
         <div className="flex-1 p-4">
-          <h1 className="text-2xl font-bold mb-2">{product.name}</h1>
+          <h1 className="text-2xl font-bold mb-2">
+            {product.name} Chính Hãng VN/A
+          </h1>
 
           <p className="text-gray-500 mb-1">Giá bán</p>
           <p className="text-3xl font-bold text-red-500 mb-4">
@@ -175,20 +177,27 @@ const ProductDetail = () => {
           <div className="mt-6 flex gap-4 flex-wrap">
             <button
               className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold"
-              onClick={() =>
-                currentVariant && addToCart(product, currentVariant)
-              }
+              onClick={() => {
+                if (currentVariant) {
+                  addToCart(product, currentVariant);
+                  window.location.href = "/checkout"; // hoặc dùng useNavigate nếu trong hook
+                }
+              }}
             >
               Mua Ngay
             </button>
+
             <button
               className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold"
-              onClick={() =>
-                currentVariant && addToCart(product, currentVariant)
-              }
+              onClick={() => {
+                if (currentVariant) {
+                  addToCart(product, currentVariant);
+                }
+              }}
             >
               Thêm vào Giỏ
             </button>
+
             <button
               onClick={() => setIsOpen(true)}
               className="border px-6 py-3 rounded-lg font-bold border-gray-300"

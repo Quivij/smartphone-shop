@@ -1,8 +1,16 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
 
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true, // Cho phép nhiều null nếu chưa set slug
+    },
+
     description: { type: String, required: true },
     category: { type: String, required: true },
     brand: { type: String, required: true },
@@ -14,7 +22,7 @@ const productSchema = new mongoose.Schema(
         price: { type: Number, required: true, min: 0 },
         images: [{ type: String, required: true }],
         stock: { type: Number, default: 0, min: 0 },
-        sold: { type: Number, default: 0, min: 0 }, // ✅ đã thêm
+        sold: { type: Number, default: 0, min: 0 },
       },
     ],
 
@@ -36,10 +44,29 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
-    sold: { type: Number, default: 0 }, // tổng số đã bán (có thể dùng nếu cần)
+    sold: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
+
+// ✅ Tự sinh slug nếu chưa có
+productSchema.pre("save", async function (next) {
+  if (!this.slug && this.name) {
+    const baseSlug = slugify(this.name, { lower: true });
+    let slug = baseSlug;
+    let count = 1;
+
+    // Đảm bảo slug không trùng
+    while (await mongoose.models.Product.findOne({ slug })) {
+      slug = `${baseSlug}-${count}`;
+      count++;
+    }
+
+    this.slug = slug;
+  }
+
+  next();
+});
 
 const Product = mongoose.model("Product", productSchema);
 

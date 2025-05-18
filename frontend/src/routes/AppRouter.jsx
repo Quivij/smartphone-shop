@@ -4,9 +4,9 @@ import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
 
 import Home from "../pages/Home";
-import Products from "../pages/Products";
+import ProductListPage from "../pages/ProductListPage";
+
 import ProductDetail from "../pages/ProductDetail";
-import AllProducts from "../components/AllProducts";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ProfilePage from "../pages/ProfilePage";
@@ -24,6 +24,7 @@ import EditProduct from "../pages/admin/products/EditProduct";
 import AdminUser from "../pages/admin/AdminUser";
 import EditUser from "../pages/admin/users/EditUser";
 import CreateUserPage from "../pages/admin/users/CreateUserPage";
+import AdminOrderDetail from "../pages/admin/AdminOrderDetail";
 
 // ✅ MỚI: Import các trang liên quan đến đặt hàng
 import CheckoutPage from "../pages/CheckoutPage";
@@ -37,12 +38,8 @@ const AppRouter = () => {
         {/* Main Layout routes */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
-          <Route path="products" element={<AllProducts />} />
-          <Route path="products/:category" element={<Products />} />
-          <Route
-            path="products/:category/:subcategory"
-            element={<Products />}
-          />
+          <Route path="/products/:brand" element={<ProductListPage />} />
+
           <Route path="product/:id" element={<ProductDetail />} />
           <Route path="cart" element={<CartPage />} />
 
@@ -104,6 +101,9 @@ const AppRouter = () => {
             <Route path="edit/:id" element={<EditProduct />} />
           </Route>
           <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:id" element={<AdminOrderDetail />} />
+
           <Route path="users">
             <Route index element={<AdminUser />} />
             <Route path="edit/:id" element={<EditUser />} />
