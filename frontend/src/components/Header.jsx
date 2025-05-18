@@ -24,8 +24,8 @@ const menuItems = [
     link: "/products/Realme",
   },
   {
-    label: "Vivo",
-    link: "/products/Vivo",
+    label: "HONOR",
+    link: "/products/HONOR",
   },
 ];
 
