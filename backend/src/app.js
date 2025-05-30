@@ -7,6 +7,7 @@ const userRoutes = require("./routes/UserRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const dashboardRoute = require("./routes/dashboardRoute");
 const chatbot = require("./routes/chatbot");
 const session = require("express-session");
 
@@ -47,7 +48,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/chatbot", chatbot);
-
+app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Middleware xử lý lỗi

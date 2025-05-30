@@ -8,7 +8,7 @@ import {
 import { useMutationHook } from "../../hooks/useMutationHook";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-import ConfirmModal from "../../components/common/ConfirmModal";
+import ConfirmModal from "../../components/ConfirmModal";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../hooks/useDebounce";
 import * as XLSX from "xlsx";
@@ -36,7 +36,6 @@ const AdminUser = () => {
   });
 
   const users = data?.users || [];
-  const pagination = data?.pagination || {};
 
   const deleteMutation = useMutationHook(deleteUserById, {
     onSuccess: () => {
@@ -86,12 +85,6 @@ const AdminUser = () => {
     } else {
       setSelectedUsers(users.map((u) => u._id));
     }
-  };
-
-  const handlePageChange = (direction) => {
-    if (direction === "prev" && page > 1) setPage((p) => p - 1);
-    if (direction === "next" && page < pagination.totalPages)
-      setPage((p) => p + 1);
   };
 
   const handleSearchChange = (e) => {
@@ -225,26 +218,6 @@ const AdminUser = () => {
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex justify-between items-center mt-4">
-        <button
-          disabled={page === 1}
-          onClick={() => handlePageChange("prev")}
-          className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
-        >
-          Trang trước
-        </button>
-        <span>
-          Trang {pagination.currentPage} / {pagination.totalPages}
-        </span>
-        <button
-          disabled={page === pagination.totalPages}
-          onClick={() => handlePageChange("next")}
-          className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
-        >
-          Trang sau
-        </button>
       </div>
 
       <ConfirmModal

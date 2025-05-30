@@ -15,15 +15,15 @@ import Unauthorized from "../pages/Unauthorized";
 
 import AdminLayout from "../layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
-import AdminProduct from "../pages/admin/Products";
+import AdminProduct from "../pages/admin/AdminProducts";
 import AdminOrdersPage from "../pages/admin/Orders";
 import CartPage from "../pages/CartPage";
-import CreateProduct from "../pages/admin/products/CreateProduct";
-import EditProduct from "../pages/admin/products/EditProduct";
+import CreateProduct from "../pages/admin/CreateProduct";
+import EditProduct from "../pages/admin/EditProduct";
 
 import AdminUser from "../pages/admin/AdminUser";
-import EditUser from "../pages/admin/users/EditUser";
-import CreateUserPage from "../pages/admin/users/CreateUserPage";
+import EditUser from "../pages/admin/EditUser";
+import CreateUserPage from "../pages/admin/CreateUserPage";
 import AdminOrderDetail from "../pages/admin/AdminOrderDetail";
 
 // ✅ MỚI: Import các trang liên quan đến đặt hàng

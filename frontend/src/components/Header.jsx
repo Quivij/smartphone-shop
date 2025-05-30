@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useLogout } from "../hooks/useLogout";
 import { useUserStore } from "../store/useUserStore";
-import SearchDropdown from "./SearchDropdown"; // điều chỉnh path nếu cần
+import SearchDropdown from "./SearchDropdown";
 import { useCartStore } from "../store/useCartStore";
 
 const menuItems = [
@@ -15,10 +15,7 @@ const menuItems = [
     label: "Samsung",
     link: "/products/Samsung",
   },
-  {
-    label: "Oppo",
-    link: "/products/Oppo",
-  },
+
   {
     label: "Realme",
     link: "/products/Realme",
@@ -26,6 +23,10 @@ const menuItems = [
   {
     label: "HONOR",
     link: "/products/HONOR",
+  },
+  {
+    label: "Điện Thoại",
+    link: "/products/DienThoai",
   },
 ];
 
@@ -155,7 +156,10 @@ const Header = () => {
                         </li>
                         {user.isAdmin && (
                           <li className="p-3 hover:bg-gray-100 cursor-pointer">
-                            <Link to="/admin" className="block w-full h-full">
+                            <Link
+                              to="/admin/dashboard"
+                              className="block w-full h-full"
+                            >
                               Quản lý hệ thống
                             </Link>
                           </li>
