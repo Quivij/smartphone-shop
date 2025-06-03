@@ -1,10 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  getAllUsers,
-  deleteUserById,
-  deleteMultipleUsers,
-} from "../../api/auth";
+import { getAllUsers, deleteUserById } from "../../api/auth";
 import { useMutationHook } from "../../hooks/useMutationHook";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
@@ -17,9 +13,7 @@ import { saveAs } from "file-saver";
 const AdminUser = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isConfirmDeleteManyOpen, setIsConfirmDeleteManyOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -47,17 +41,6 @@ const AdminUser = () => {
     },
   });
 
-  const deleteMultipleMutation = useMutationHook(deleteMultipleUsers, {
-    onSuccess: () => {
-      toast.success("Xoá nhiều người dùng thành công");
-      setSelectedUsers([]);
-      refetch();
-    },
-    onError: () => {
-      toast.error("Xoá nhiều người dùng thất bại");
-    },
-  });
-
   const handleDelete = (id) => {
     setSelectedUser(id);
     setIsConfirmOpen(true);
@@ -68,29 +51,11 @@ const AdminUser = () => {
     setIsConfirmOpen(false);
   };
 
-  const confirmDeleteMany = () => {
-    deleteMultipleMutation.mutate(selectedUsers);
-    setIsConfirmDeleteManyOpen(false);
-  };
-
-  const handleUserSelect = (id) => {
-    setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map((u) => u._id));
-    }
-  };
-
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPage(1);
   };
+
   const handleExportExcel = () => {
     if (!users || users.length === 0) {
       toast.info("Không có dữ liệu người dùng để xuất");
@@ -147,13 +112,6 @@ const AdminUser = () => {
 
       <div className="flex items-center mb-4">
         <button
-          onClick={() => setIsConfirmDeleteManyOpen(true)}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-          disabled={selectedUsers.length === 0}
-        >
-          Xoá nhiều
-        </button>
-        <button
           onClick={handleExportExcel}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
@@ -165,13 +123,7 @@ const AdminUser = () => {
         <table className="min-w-full bg-white border border-gray-200">
           <thead className="bg-gray-100 text-sm font-semibold text-gray-700">
             <tr>
-              <th className="p-3 border">
-                <input
-                  type="checkbox"
-                  checked={selectedUsers.length === users.length}
-                  onChange={handleSelectAll}
-                />
-              </th>
+              {/* Bỏ cột checkbox */}
               <th className="p-3 border">Tên</th>
               <th className="p-3 border">Email</th>
               <th className="p-3 border">SĐT</th>
@@ -182,20 +134,13 @@ const AdminUser = () => {
           <tbody className="text-sm text-gray-800">
             {users.map((u) => (
               <tr key={u._id} className="border-t hover:bg-gray-50">
-                <td className="p-3 border">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(u._id)}
-                    onChange={() => handleUserSelect(u._id)}
-                  />
-                </td>
+                {/* Bỏ checkbox chọn */}
                 <td className="p-3 border">{u.name}</td>
                 <td className="p-3 border">{u.email}</td>
                 <td className="p-3 border">{u.phone || "—"}</td>
                 <td className="p-3 border capitalize">
                   {u.isAdmin ? "Admin" : "Người dùng"}
                 </td>
-
                 <td className="p-3 border">
                   <div className="flex justify-center gap-2">
                     <Link
@@ -226,14 +171,6 @@ const AdminUser = () => {
         onConfirm={confirmDelete}
         title="Xác nhận xoá"
         message="Bạn có chắc chắn muốn xoá người dùng này không?"
-      />
-
-      <ConfirmModal
-        isOpen={isConfirmDeleteManyOpen}
-        onClose={() => setIsConfirmDeleteManyOpen(false)}
-        onConfirm={confirmDeleteMany}
-        title="Xác nhận xoá nhiều"
-        message="Bạn có chắc chắn muốn xoá các người dùng đã chọn?"
       />
     </div>
   );

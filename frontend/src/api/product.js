@@ -55,18 +55,6 @@ export const getProductById = async (id) => {
   }
 };
 
-// Xóa nhiều sản phẩm
-export const deleteMultipleProducts = async (ids) => {
-  try {
-    return await api.delete("/products/delete-many", {
-      data: { ids },
-    });
-  } catch (error) {
-    console.error("Error deleting multiple products:", error);
-    throw error;
-  }
-};
-
 // Lấy tất cả sản phẩm
 export const allProducts = async () => {
   try {

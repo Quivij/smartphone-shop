@@ -30,6 +30,8 @@ import AdminOrderDetail from "../pages/admin/AdminOrderDetail";
 import CheckoutPage from "../pages/CheckoutPage";
 import MyOrdersPage from "../pages/MyOrdersPage";
 import OrderDetailPage from "../pages/OrderDetailPage";
+import CreateCoupon from "../pages/admin/CreateCoupon";
+import CouponList from "../pages/admin/CouponList";
 
 const AppRouter = () => {
   return (
@@ -108,6 +110,10 @@ const AppRouter = () => {
             <Route index element={<AdminUser />} />
             <Route path="edit/:id" element={<EditUser />} />
             <Route path="create" element={<CreateUserPage />} />
+          </Route>
+          <Route path="coupons">
+            <Route index element={<CouponList />} />
+            <Route path="create" element={<CreateCoupon />} />
           </Route>
           <Route path="*" element={<Dashboard />} />
         </Route>

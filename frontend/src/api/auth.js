@@ -51,12 +51,6 @@ export const updateUserById = async (userId, data) => {
   return response.data;
 };
 
-export const deleteMultipleUsers = async (userIds) => {
-  const response = await api.delete("/users/delete-multiple", {
-    data: { userIds }, // axios dùng `data` để gửi body với DELETE
-  });
-  return response.data;
-};
 export const getUserById = async (userId) => {
   const response = await api.get(`/users/${userId}`);
   return response.data;

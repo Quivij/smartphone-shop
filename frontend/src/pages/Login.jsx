@@ -11,14 +11,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const {
-    loading,
-    error,
-    successMessage,
-    handleLogin,
-    handleGoogleLogin,
-    handleFacebookLogin,
-  } = useLogin();
+  const { loading, error, successMessage, handleLogin } = useLogin();
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -70,27 +63,6 @@ const Login = () => {
 
           <Button text={loading ? "Đang đăng nhập..." : "Đăng Nhập"} />
         </form>
-
-        {/* Đăng nhập với Google và Facebook */}
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2 w-full mb-2"
-          >
-            <FcGoogle className="mr-2 text-xl" />
-            Đăng nhập với Google
-          </button>
-        </div>
-
-        <div className="flex justify-center mt-2">
-          <button
-            onClick={handleFacebookLogin}
-            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 w-full"
-          >
-            <FaFacebookF className="mr-2 text-xl" />
-            Đăng nhập với Facebook
-          </button>
-        </div>
 
         <p className="mt-4 text-center text-gray-600">
           Chưa có tài khoản?{" "}

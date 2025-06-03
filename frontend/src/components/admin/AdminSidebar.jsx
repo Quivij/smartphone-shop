@@ -6,6 +6,7 @@ const AdminSidebar = () => {
     { name: "Sản phẩm", path: "/admin/products" },
     { name: "Đơn hàng", path: "/admin/orders" },
     { name: "Người dùng", path: "/admin/users" },
+    { name: "Khuyến mãi", path: "/admin/coupons" },
   ];
 
   return (
