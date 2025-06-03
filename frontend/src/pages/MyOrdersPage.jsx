@@ -89,8 +89,17 @@ const MyOrdersPage = () => {
               ))}
             </div>
 
-            <div className="mt-3 text-right font-semibold text-lg text-blue-700">
-              Tổng tiền: {order.totalPrice.toLocaleString()}₫
+            {/* Hiển thị giá giảm và tổng tiền */}
+            <div className="mt-3 text-right space-y-1">
+              {order.discountAmount > 0 && (
+                <div className="text-green-600">
+                  Giảm giá: -{order.discountAmount.toLocaleString()}₫
+                </div>
+              )}
+              <div className="font-semibold text-lg text-blue-700">
+                Thanh toán:{" "}
+                {(order.finalPrice ?? order.totalPrice).toLocaleString()}₫
+              </div>
             </div>
 
             <div className="mt-3 text-right">

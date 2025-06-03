@@ -8,6 +8,7 @@ const {
 const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+router.post("/validate", validateCoupon);
 
 // Admin tạo mã khuyến mãi
 router.post("/", authMiddleware, isAdmin, createCoupon);
@@ -15,6 +16,5 @@ router.get("/", authMiddleware, isAdmin, getAllCoupons);
 router.delete("/:id", authMiddleware, isAdmin, deleteCouponById);
 
 // Khách hàng kiểm tra mã
-router.post("/validate", validateCoupon);
 
 module.exports = router;

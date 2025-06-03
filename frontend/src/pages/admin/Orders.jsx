@@ -69,6 +69,8 @@ const AdminOrdersPage = () => {
       "Mã đơn": order._id,
       "Người mua": order.user?.name,
       "Tổng tiền": order.totalPrice,
+      "Giảm giá": order.discountAmount || 0,
+      "Thanh toán cuối": order.finalPrice || order.totalPrice,
       "Phương thức": order.paymentMethod,
       "Ngày tạo": new Date(order.createdAt).toLocaleDateString("vi-VN"),
       "Thanh toán":
@@ -76,6 +78,7 @@ const AdminOrdersPage = () => {
       "Giao hàng": order.isDelivered ? "Đã giao" : "Chưa giao",
       "Trạng thái": order.status,
     }));
+
     const ws = utils.json_to_sheet(exportData);
     const wb = utils.book_new();
     utils.book_append_sheet(wb, ws, "Orders");
@@ -144,6 +147,8 @@ const AdminOrdersPage = () => {
                 <th className="p-3 border">Mã đơn</th>
                 <th className="p-3 border">Người mua</th>
                 <th className="p-3 border">Tổng tiền</th>
+                <th className="p-3 border">Giảm giá</th>
+                <th className="p-3 border">Thanh toán cuối</th>
                 <th className="p-3 border">Phương thức</th>
                 <th className="p-3 border">Ngày tạo</th>
                 <th className="p-3 border">Thanh toán</th>
@@ -155,7 +160,7 @@ const AdminOrdersPage = () => {
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="text-center py-4 text-gray-500">
+                  <td colSpan="11" className="text-center py-4 text-gray-500">
                     Không tìm thấy đơn hàng nào.
                   </td>
                 </tr>
@@ -168,6 +173,12 @@ const AdminOrdersPage = () => {
                     <td className="p-3 border">{order.user?.name}</td>
                     <td className="p-3 border text-red-600 font-semibold">
                       {order.totalPrice.toLocaleString()}₫
+                    </td>
+                    <td className="p-3 border text-green-600 font-semibold">
+                      -{(order.discountAmount || 0).toLocaleString()}₫
+                    </td>
+                    <td className="p-3 border text-blue-600 font-semibold">
+                      {(order.finalPrice || order.totalPrice).toLocaleString()}₫
                     </td>
                     <td className="p-3 border">{order.paymentMethod}</td>
                     <td className="p-3 border">
@@ -226,7 +237,7 @@ const AdminOrdersPage = () => {
                         )}
                         <Link
                           to={`/admin/orders/${order._id}`}
-                          className="bg-gray-600 hover:bg-gray-700 text-white text-xs px-3 py-1 rounded"
+                          className="bg-indigo-500 hover:bg-indigo-600 text-white text-xs px-3 py-1 rounded"
                         >
                           Xem
                         </Link>
