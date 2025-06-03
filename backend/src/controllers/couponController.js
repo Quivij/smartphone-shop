@@ -12,7 +12,9 @@ exports.createCoupon = async (req, res) => {
 };
 exports.validateCoupon = async (req, res) => {
   try {
-    const { code, orderTotal } = req.body;
+    const code = req.query.code?.toLowerCase();
+
+    if (!code) return res.status(400).json({ message: "Thiếu mã giảm giá" });
 
     const coupon = await Coupon.findOne({ code, isActive: true });
 
@@ -22,16 +24,17 @@ exports.validateCoupon = async (req, res) => {
     if (new Date(coupon.expireDate) < Date.now())
       return res.status(400).json({ message: "Mã đã hết hạn" });
 
-    if (orderTotal < coupon.minOrderValue)
-      return res
-        .status(400)
-        .json({ message: `Đơn hàng phải từ ${coupon.minOrderValue}đ` });
-
-    res.status(200).json({ valid: true, coupon });
+    res.status(200).json({
+      valid: true,
+      type: coupon.discountType,
+      value: coupon.discountValue,
+      coupon,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 exports.getAllCoupons = async (req, res) => {
   const coupons = await Coupon.find();
   res.json(coupons);

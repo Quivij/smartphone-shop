@@ -4,7 +4,15 @@ const Product = require("../models/Product");
 // [POST] /api/orders - Tạo đơn hàng mới
 const createOrder = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body;
+    const {
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      totalPrice,
+      discountAmount = 0,
+      finalPrice,
+      couponCode = "",
+    } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
       return res
@@ -12,18 +20,32 @@ const createOrder = async (req, res) => {
         .json({ message: "Không có sản phẩm nào trong đơn hàng" });
     }
 
+    // Optional: Kiểm tra mã giảm giá
+    // if (couponCode) {
+    //   const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+    //   if (!coupon) {
+    //     return res.status(400).json({ message: "Mã giảm giá không hợp lệ hoặc đã hết hạn." });
+    //   }
+    // }
+
     const newOrder = new Order({
       user: req.user.id,
       orderItems,
       shippingAddress,
       paymentMethod,
       totalPrice,
+      discountAmount,
+      finalPrice,
+      couponCode: couponCode.toUpperCase(),
+      isPaid: paymentMethod !== "COD",
+      status: "Processing",
     });
 
     const savedOrder = await newOrder.save();
     res.status(201).json(savedOrder);
   } catch (error) {
-    res.status(500).json({ message: "Tạo đơn hàng thất bại", error });
+    console.error("Lỗi tạo đơn hàng:", error);
+    res.status(500).json({ message: "Tạo đơn hàng thất bại." });
   }
 };
 
@@ -90,7 +112,6 @@ const getOrderById = async (req, res) => {
 };
 
 // [PUT] /api/orders/:id/deliver - Admin cập nhật trạng thái giao hàng
-// [PUT] /api/orders/:id/deliver - Admin cập nhật trạng thái giao hàng
 const markAsDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -106,6 +127,9 @@ const markAsDelivered = async (req, res) => {
     // Đánh dấu là đã giao
     order.isDelivered = true;
     order.deliveredAt = new Date();
+
+    // Cập nhật trạng thái sang "Delivered"
+    order.status = "Delivered";
 
     // Cập nhật tồn kho & đã bán cho từng sản phẩm trong đơn hàng
     for (const item of order.orderItems) {

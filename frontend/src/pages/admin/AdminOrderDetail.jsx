@@ -56,10 +56,27 @@ const AdminOrderDetail = () => {
             <span className="text-gray-600">Chưa giao</span>
           )}
         </div>
+
+        {order.coupon && (
+          <div>
+            <strong>Mã giảm giá:</strong>{" "}
+            <span className="text-blue-600">{order.coupon.code}</span>
+          </div>
+        )}
+
+        {order.discountAmount > 0 && (
+          <div>
+            <strong>Giảm giá:</strong>{" "}
+            <span className="text-green-600 font-medium">
+              -{order.discountAmount.toLocaleString("vi-VN")}₫
+            </span>
+          </div>
+        )}
+
         <div>
-          <strong>Tổng tiền:</strong>{" "}
+          <strong>Tổng thanh toán:</strong>{" "}
           <span className="text-xl font-bold text-rose-600">
-            {order.totalPrice.toLocaleString("vi-VN")}₫
+            {(order.finalPrice ?? order.totalPrice).toLocaleString("vi-VN")}₫
           </span>
         </div>
       </div>
@@ -67,27 +84,48 @@ const AdminOrderDetail = () => {
       <div className="mt-8">
         <h3 className="text-lg font-semibold mb-2">Danh sách sản phẩm:</h3>
         <ul className="divide-y divide-gray-200 border rounded-md bg-white">
-          {order.orderItems.map((item, index) => (
-            <li
-              key={index}
-              className="flex justify-between items-center px-4 py-3"
-            >
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-800">
-                  {item.product?.name || "Không có tên sản phẩm"}
-                </span>
-                <span className="text-sm text-gray-500">
-                  Màu: {item.color} | Dung lượng: {item.storage}
-                </span>
-                <span className="text-sm text-gray-500">
-                  Số lượng: {item.quantity}
-                </span>
-              </div>
-              <div className="text-right text-gray-700 font-semibold">
-                {(item.price * item.quantity).toLocaleString("vi-VN")}₫
-              </div>
-            </li>
-          ))}
+          {order.orderItems.map((item, index) => {
+            const hasDiscount =
+              item.originalPrice && item.originalPrice > item.price;
+            return (
+              <li
+                key={index}
+                className="flex justify-between items-center px-4 py-4"
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-800">
+                    {item.product?.name || "Không có tên sản phẩm"}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Màu: {item.color} | Dung lượng: {item.storage}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Số lượng: {item.quantity}
+                  </span>
+                  {hasDiscount && (
+                    <>
+                      <span className="text-sm text-gray-500">
+                        Giá gốc:{" "}
+                        <span className="line-through">
+                          {item.originalPrice.toLocaleString("vi-VN")}₫
+                        </span>
+                      </span>
+                      <span className="text-sm text-green-600 font-medium">
+                        Đã giảm:{" "}
+                        {(item.originalPrice - item.price).toLocaleString(
+                          "vi-VN"
+                        )}
+                        ₫
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="text-right text-gray-700 font-semibold">
+                  {(item.price * item.quantity).toLocaleString("vi-VN")}₫
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

@@ -7,31 +7,46 @@ export const getDashboardStats = async (req, res) => {
     // Tổng số liệu
     const totalUsers = await User.countDocuments();
     const totalOrders = await Order.countDocuments();
+
+    // Tổng doanh thu chưa trừ giảm giá
     const totalRevenueAgg = await Order.aggregate([
       { $match: { status: { $ne: "cancelled" } } },
       { $group: { _id: null, total: { $sum: "$totalPrice" } } },
     ]);
     const totalRevenue = totalRevenueAgg[0]?.total || 0;
+
+    // Tổng giảm giá
+    const totalDiscountAgg = await Order.aggregate([
+      { $match: { status: { $ne: "cancelled" } } },
+      { $group: { _id: null, totalDiscount: { $sum: "$discountAmount" } } },
+    ]);
+    const totalDiscount = totalDiscountAgg[0]?.totalDiscount || 0;
+
     const totalProducts = await Product.countDocuments();
 
-    // Doanh thu theo tháng (6 tháng gần nhất)
+    // Doanh thu và giảm giá theo tháng (6 tháng gần nhất)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5); // 5 tháng trước + tháng hiện tại = 6 tháng
+
     const revenueByMonth = await Order.aggregate([
       {
         $match: {
-          createdAt: {
-            $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)),
-          },
+          createdAt: { $gte: sixMonthsAgo },
           status: { $ne: "cancelled" },
         },
       },
       {
         $group: {
-          _id: { month: { $month: "$createdAt" } },
-          total: { $sum: "$totalPrice" },
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+          },
+          totalRevenue: { $sum: "$totalPrice" },
+          totalDiscount: { $sum: "$discountAmount" },
         },
       },
       {
-        $sort: { "_id.month": 1 },
+        $sort: { "_id.year": 1, "_id.month": 1 },
       },
     ]);
 
@@ -51,15 +66,31 @@ export const getDashboardStats = async (req, res) => {
       "Tháng 12",
     ];
 
-    const chartData = revenueByMonth.map((item) => ({
-      name: monthsMap[item._id.month],
-      doanhThu: item.total,
-    }));
+    // Đảm bảo đủ 6 tháng liên tiếp (có thể có tháng không có doanh thu => fill 0)
+    const now = new Date();
+    const chartData = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+
+      const found = revenueByMonth.find(
+        (item) => item._id.month === month && item._id.year === year
+      );
+
+      chartData.push({
+        name: monthsMap[month],
+        doanhThu: found ? found.totalRevenue : 0,
+        discount: found ? found.totalDiscount : 0,
+      });
+    }
 
     res.json({
       totalUsers,
       totalOrders,
       totalRevenue,
+      totalDiscount,
       totalProducts,
       chartData,
     });

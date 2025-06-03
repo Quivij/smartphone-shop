@@ -139,9 +139,17 @@ const OrderDetailPage = () => {
         ))}
       </div>
 
-      {/* Tổng tiền đơn hàng */}
-      <div className="text-right font-semibold text-2xl mb-6">
-        Tổng tiền: {order.totalPrice.toLocaleString()}₫
+      {/* Tổng tiền và giảm giá */}
+      <div className="text-right font-semibold text-xl mb-6 space-y-1">
+        {order.discountAmount > 0 && (
+          <div className="text-green-600 text-lg">
+            Giảm giá: -{order.discountAmount.toLocaleString()}₫
+          </div>
+        )}
+        <div className="text-2xl text-blue-700">
+          Tổng thanh toán:{" "}
+          {(order.finalPrice ?? order.totalPrice).toLocaleString()}₫
+        </div>
       </div>
 
       {/* Nút hủy đơn hàng */}

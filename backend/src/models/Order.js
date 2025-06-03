@@ -14,10 +14,10 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        color: { type: String, required: true }, // biến thể màu
-        storage: { type: String, required: true }, // biến thể dung lượng
+        color: { type: String, required: true },
+        storage: { type: String, required: true },
         quantity: { type: Number, required: true, min: 1 },
-        price: { type: Number, required: true }, // giá tại thời điểm đặt
+        price: { type: Number, required: true },
       },
     ],
     shippingAddress: {
@@ -50,11 +50,24 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Thêm trường status để theo dõi trạng thái của đơn hàng
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    finalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    couponCode: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
-      default: "Pending", // Đơn hàng mặc định ở trạng thái Pending
+      default: "Pending",
     },
   },
   {

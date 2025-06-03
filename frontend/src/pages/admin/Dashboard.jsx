@@ -8,17 +8,22 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { Card } from "../../components/card";
 import { Users, ShoppingCart, DollarSign, Package } from "lucide-react";
 
-// 👉 Token giả lập (thay bằng token thực tế từ context/auth)
 const fakeToken = "your-jwt-token-here";
 
 const Dashboard = () => {
   const { data, isLoading, isError } = useDashboardStats(fakeToken);
   const navigate = useNavigate();
+  const chartDataWithDiscount =
+    data?.chartData?.map((item) => ({
+      ...item,
+      doanhThuDaGiam: item.doanhThu - (item.discount || 0),
+    })) ?? [];
 
   const stats = [
     {
@@ -36,8 +41,24 @@ const Dashboard = () => {
       path: "/admin/orders",
     },
     {
-      title: "Doanh thu",
-      value: `$${data?.totalRevenue?.toLocaleString() ?? "0"}`,
+      title: "Doanh thu thực tế",
+      value: (
+        <div className="text-gray-800 font-bold text-lg">
+          <div>
+            <span className="mr-2">Chưa giảm giá:</span>
+            <span>{(data?.totalRevenue ?? 0).toLocaleString("vi-VN")}₫</span>
+          </div>
+          <div>
+            <span className="mr-2">Đã giảm giá:</span>
+            <span>
+              {(
+                (data?.totalRevenue ?? 0) - (data?.totalDiscount ?? 0)
+              ).toLocaleString("vi-VN")}
+              ₫
+            </span>
+          </div>
+        </div>
+      ),
       icon: <DollarSign className="text-yellow-600" />,
       bg: "bg-yellow-100",
     },
@@ -87,16 +108,29 @@ const Dashboard = () => {
               📈 Doanh thu 6 tháng gần nhất
             </h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.chartData}>
+              <BarChart data={chartDataWithDiscount}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => `${value.toLocaleString("vi-VN")}₫`}
+                />
+                <Legend />
+                {/* Doanh thu chưa giảm */}
                 <Bar
                   dataKey="doanhThu"
+                  name="Doanh thu chưa giảm giá"
                   fill="#6366f1"
                   radius={[4, 4, 0, 0]}
-                  barSize={40}
+                  barSize={20}
+                />
+                {/* Doanh thu đã giảm */}
+                <Bar
+                  dataKey="doanhThuDaGiam"
+                  name="Doanh thu đã giảm giá"
+                  fill="#22c55e"
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
                 />
               </BarChart>
             </ResponsiveContainer>
