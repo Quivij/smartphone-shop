@@ -1,74 +1,86 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import cartApi from '../api/cartApi';
 
 export const useCartStore = create(
   persist(
     (set, get) => ({
       cartItems: [],
+      isLoading: false,
+      error: null,
 
-      addToCart: (product, variant) => {
-        if (!product || !variant) return;
-
-        const cartItems = get().cartItems;
-
-        const existingIndex = cartItems.findIndex(
-          (item) =>
-            item.productId === product._id &&
-            item.color === variant.color &&
-            item.storage === variant.storage
-        );
-
-        if (existingIndex !== -1) {
-          const updatedItems = [...cartItems];
-          updatedItems[existingIndex].quantity += 1;
-          set({ cartItems: updatedItems });
-        } else {
-          set({
-            cartItems: [
-              ...cartItems,
-              {
-                productId: product._id,
-                name: product.name,
-                price: variant.price,
-                // Kiểm tra và gán ảnh sản phẩm nếu hợp lệ
-                image:
-                  variant.images && variant.images.length > 0
-                    ? `http://localhost:3001${variant.images[0]}`
-                    : "default-image.jpg", // Đặt ảnh mặc định nếu không có ảnh
-                color: variant.color,
-                storage: variant.storage,
-                quantity: 1,
-              },
-            ],
-          });
+      syncCartWithBackend: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const cart = await cartApi.getCart();
+          set({ cartItems: cart.items || [], isLoading: false });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
         }
       },
 
-      removeFromCart: (productId, color, storage) => {
-        const cartItems = get().cartItems;
-        const updatedItems = cartItems.filter(
-          (item) =>
-            item.productId !== productId ||
-            item.color !== color ||
-            item.storage !== storage
-        );
-        set({ cartItems: updatedItems });
+      addToCart: async (product, variant) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await cartApi.addToCart(
+            product._id,
+            variant.storage,
+            1
+          );
+          set({ cartItems: response.items || [], isLoading: false });
+          return response;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
       },
 
-      updateQuantity: (productId, color, storage, quantity) => {
-        const cartItems = get().cartItems;
-        const updatedItems = cartItems.map((item) => {
-          if (
-            item.productId === productId &&
-            item.color === color &&
-            item.storage === storage
-          ) {
-            return { ...item, quantity: Math.max(1, quantity) };
-          }
-          return item;
-        });
+      removeFromCart: async (itemId) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await cartApi.removeFromCart(itemId);
+          set({ cartItems: response.items || [], isLoading: false });
+          return response;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
 
-        set({ cartItems: updatedItems });
+      updateCartItem: async (itemId, quantity) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await cartApi.updateCartItem(itemId, quantity);
+          set({ cartItems: response.items || [], isLoading: false });
+          return response;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      updateQuantity: async (productId, storage, quantity) => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await cartApi.updateQuantity(productId, storage, quantity);
+          set({ cartItems: response.items || [], isLoading: false });
+          return response;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      fetchCart: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const response = await cartApi.getCart();
+          set({ cartItems: response.items || [], isLoading: false });
+          return response;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
       },
 
       getCartCount: () => {
@@ -79,12 +91,11 @@ export const useCartStore = create(
       },
 
       clearCart: () => {
-        set({ cartItems: [] });
-        localStorage.removeItem("cart-storage"); // Xóa dữ liệu giỏ hàng trong localStorage
+        set({ cartItems: [], error: null });
       },
     }),
     {
-      name: "cart-storage", // Lưu trữ giỏ hàng trong localStorage
+      name: "cart-storage",
     }
   )
 );

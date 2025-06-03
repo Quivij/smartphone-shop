@@ -17,7 +17,6 @@ const authMiddleware = (req, res, next) => {
     res.status(401).json({ message: "Token không hợp lệ" });
   }
 };
-
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     return next(); // Nếu là admin, tiếp tục thực hiện action

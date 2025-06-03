@@ -2,10 +2,16 @@ const User = require("../models/User"); // Đảm bảo đường dẫn đúng
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
-// Tạo Access Token (hết hạn sau 15 phút)
+const { registerUserService, loginUserService, getUserInfoService, getAllUsersService, getUserDetailService,getAllUsersRawSevice,
+  updateUserService, createUserService, loginWithGoogleService, loginWithFacebookService
+} = require("../services/userService");
+
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user._id, isAdmin: user.isAdmin },
+    { id: user._id, 
+      isAdmin: user.isAdmin,
+      name: user.name, 
+      email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
@@ -13,7 +19,12 @@ const generateAccessToken = (user) => {
 
 // Tạo Refresh Token (hết hạn sau 30 ngày)
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, {
+  return jwt.sign({ 
+      id: user._id, 
+      isAdmin: user.isAdmin,
+      name: user.name, 
+      email: user.email}, 
+    process.env.REFRESH_SECRET, {
     expiresIn: "30d",
   });
 };
@@ -21,38 +32,10 @@ const generateRefreshToken = (user) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
+    const data = await registerUserService(name, email, password, confirmPassword);
+    const accessToken = generateAccessToken(data);
+    const refreshToken = generateRefreshToken(data);
 
-    // Kiểm tra xem mật khẩu và xác nhận mật khẩu có khớp không
-    if (password !== confirmPassword) {
-      return res
-        .status(400)
-        .json({ message: "Mật khẩu và xác nhận mật khẩu không khớp" });
-    }
-
-    // Kiểm tra xem email đã tồn tại chưa
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email đã được sử dụng" });
-    }
-
-    // Mã hóa mật khẩu
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Tạo người dùng mới
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    await user.save();
-
-    // Tạo token
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // Lưu Refresh Token vào cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -62,35 +45,28 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       message: "Đăng ký thành công",
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
+        id: data._id,
+        name: data.name,
+        email: data.email,
+        isAdmin: data.isAdmin,
       },
       accessToken,
     });
   } catch (error) {
-    console.error(error); // In lỗi ra console để dễ dàng xác định vấn đề
+    console.error("Lỗi đăng ký:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
-};
+  // return res.status(200).json({ name, email, password });
+    
+}
 
 ///////ĐĂNG NHÂP
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra xem email có tồn tại không
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Email không tồn tại" });
-    }
-
-    // Kiểm tra mật khẩu có đúng không
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Mật khẩu không đúng" });
-    }
+    // Gọi service để xử lý logic đăng nhập
+    const user = await loginUserService(email, password);
 
     // Tạo JWT token
     const accessToken = generateAccessToken(user);
@@ -120,17 +96,13 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
-
 ////////////////////////LẤY THÔNG TIN NGƯỜI DÙNG
 const getUserInfo = async (req, res) => {
   try {
     const userId = req.user.id; // Lấy ID người dùng từ token
 
-    // Tìm người dùng theo ID
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tìm thấy" });
-    }
+    // Gọi service để lấy thông tin người dùng
+    const user = await getUserInfoService(userId);
 
     // Trả về thông tin người dùng bao gồm avatar
     res.status(200).json({
@@ -142,7 +114,7 @@ const getUserInfo = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(error.message === "Người dùng không tìm thấy" ? 404 : 500).json({ message: error.message });
   }
 };
 
@@ -150,42 +122,16 @@ const getAllUsers = async (req, res) => {
   try {
     const { search = "", isAdmin = "all", page = 1, limit = 10 } = req.query;
 
-    const query = {};
+    // Gọi service để lấy danh sách người dùng
+    const result = await getAllUsersService(search, isAdmin, page, limit);
 
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    if (isAdmin === "true") {
-      query.isAdmin = true;
-    } else if (isAdmin === "false") {
-      query.isAdmin = false;
-    }
-    // Không cần xét isAdmin === "all" vì nó là trường hợp mặc định, không cần thêm điều kiện
-
-    const skip = (page - 1) * limit;
-    const users = await User.find(query)
-      .skip(skip)
-      .limit(Number(limit))
-      .select("-password") // Ẩn password
-      .sort({ createdAt: -1 });
-
-    const totalUsers = await User.countDocuments(query);
-    const totalPages = Math.ceil(totalUsers / limit);
-
+    // Trả về phản hồi
     res.status(200).json({
-      users,
-      pagination: {
-        totalUsers,
-        totalPages,
-        currentPage: Number(page),
-        limit: Number(limit),
-      },
+      users: result.users,
+      pagination: result.pagination,
     });
   } catch (error) {
+    console.error(error); // Log lỗi để debug
     res.status(500).json({ message: "Lỗi khi lấy danh sách người dùng" });
   }
 };
@@ -193,24 +139,17 @@ const getAllUsers = async (req, res) => {
 const getUserDetail = async (req, res) => {
   try {
     const { userId } = req.params;
+    const currentUser = req.user; // Lấy thông tin người dùng hiện tại từ token
 
-    // Nếu không phải admin thì chỉ được xem thông tin của chính mình
-    if (!req.user.isAdmin && req.user.id.toString() !== userId.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Bạn không có quyền xem thông tin người dùng này" });
-    }
+    // Gọi service để lấy thông tin chi tiết người dùng
+    const user = await getUserDetailService(userId, currentUser);
 
-    // Tìm người dùng theo ID
-    const user = await User.findById(userId).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại" });
-    }
-
+    // Trả về thông tin người dùng
     res.status(200).json(user);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    const statusCode = error.message === "Người dùng không tồn tại" ? 404 : error.message === "Bạn không có quyền xem thông tin người dùng này" ? 403 : 500;
+    res.status(statusCode).json({ message: error.message });
   }
 };
 
@@ -291,16 +230,7 @@ const updateUser = async (req, res) => {
       updateData.avatar = avatarPath;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
-
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy người dùng để cập nhật." });
-    }
+    const updatedUser = await UserService.updateUser(userId, updateData, isAdmin);
 
     res.status(200).json({
       message: "Cập nhật người dùng thành công!",
@@ -311,142 +241,218 @@ const updateUser = async (req, res) => {
     res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật người dùng." });
   }
 };
-
-const createUser = async (req, res) => {
-  try {
-    const { name, email, password, phone, address, isAdmin } = req.body;
-
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "Email đã tồn tại" });
-    }
-
-    const newUser = new User({
-      name,
-      email,
-      password,
-      phone,
-      address,
-      isAdmin,
-    });
-    await newUser.save();
-
-    res
-      .status(201)
-      .json({ message: "Tạo người dùng thành công", user: newUser });
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi khi tạo người dùng" });
-  }
-};
-const getAllUsersRaw = async (req, res) => {
-  try {
-    const users = await User.find({})
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(users);
-  } catch (error) {
-    console.error("Lỗi khi xuất tất cả người dùng:", error);
-    res.status(500).json({ message: "Lỗi khi lấy tất cả người dùng" });
-  }
-};
-
-const loginWithGoogle = async (req, res) => {
-  const { token: googleToken } = req.body;
-
-  if (!googleToken)
-    return res.status(400).json({ message: "Thiếu token từ Google" });
-
-  try {
-    // Gửi yêu cầu xác minh tới Google
-    const googleRes = await axios.get(
-      `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${googleToken}`
-    );
-
-    const { email, name, picture, sub } = googleRes.data;
-
-    // Tìm user theo email
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      // Nếu chưa có user, tạo mới
-      user = await User.create({
+const createUser = async(req, res) => {
+    try {
+      const { name, email, password, phone, address, isAdmin } = req.body;
+      
+      const newUser = await UserService.createUserService({
         name,
         email,
-        avatar: picture,
-        provider: "google",
-        providerId: sub,
-        password: null, // Vì không dùng mật khẩu
+        password,
+        phone,
+        address,
+        isAdmin
       });
-    }
 
-    // Tạo access token
-    const accessToken = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({
-      message: "Đăng nhập Google thành công",
-      user,
-      accessToken,
-    });
-  } catch (error) {
-    console.error("Lỗi Google Login:", error.response?.data || error.message);
-    res.status(401).json({ message: "Xác thực Google thất bại" });
-  }
-};
-const loginWithFacebook = async (req, res) => {
-  const { accessToken, userID } = req.body;
-
-  if (!accessToken || !userID)
-    return res.status(400).json({ message: "Thiếu thông tin từ Facebook" });
-
-  try {
-    // Gọi Graph API để lấy thông tin user
-    const fbRes = await axios.get(
-      `https://graph.facebook.com/v12.0/${userID}`,
-      {
-        params: {
-          access_token: accessToken,
-          fields: "id,name,email,picture",
-        },
+      res.status(201).json({ 
+        message: 'Tạo người dùng thành công', 
+        user: newUser 
+      });
+    } catch (error) {
+      if (error.message === 'Email đã tồn tại') {
+        return res.status(400).json({ message: error.message });
       }
-    );
-
-    const { email, name, id, picture } = fbRes.data;
-
-    // Tìm hoặc tạo user
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({
-        name,
-        email,
-        avatar: picture.data.url,
-        provider: "facebook",
-        providerId: id,
-        password: null,
-      });
+      res.status(500).json({ message: 'Lỗi khi tạo người dùng' });
     }
-
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({
-      message: "Đăng nhập Facebook thành công",
-      user,
-      accessToken: token,
-    });
-  } catch (error) {
-    console.error("Lỗi Facebook Login:", error.response?.data || error.message);
-    res.status(401).json({ message: "Xác thực Facebook thất bại" });
-  }
 };
+
+  // Lấy tất cả người dùng
+const getAllUsersRaw = async(req, res) => {
+    try {
+      const users = await UserService.getAllUsersService();
+      res.status(200).json(users);
+    } catch (error) {
+      console.error('Lỗi khi xuất tất cả người dùng:', error);
+      res.status(500).json({ message: 'Lỗi khi lấy tất cả người dùng' });
+    }
+};
+
+  // Đăng nhập bằng Google
+const loginWithGoogle = async(req, res) => {
+    try {
+      const { token: googleToken } = req.body;
+      const { user, accessToken } = await UserService.loginWithGoogleService(googleToken);
+      
+      res.json({
+        message: 'Đăng nhập Google thành công',
+        user,
+        accessToken,
+      });
+    } catch (error) {
+      console.error('Lỗi Google Login:', error);
+      
+      if (error.message === 'Thiếu token từ Google') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(401).json({ message: 'Xác thực Google thất bại' });
+    }
+  };
+
+  // Đăng nhập bằng Facebook
+const loginWithFacebook = async (req, res) => {
+    try {
+      const { accessToken, userID } = req.body;
+      const { user, accessToken: token } = await UserService.loginWithFacebookService(accessToken, userID);
+      
+      res.json({
+        message: 'Đăng nhập Facebook thành công',
+        user,
+        accessToken: token,
+      });
+    } catch (error) {
+      console.error('Lỗi Facebook Login:', error);
+      
+      if (error.message === 'Thiếu thông tin từ Facebook') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(401).json({ message: 'Xác thực Facebook thất bại' });
+    }
+  };
+// const createUser = async (req, res) => {
+//   try {
+//     const { name, email, password, phone, address, isAdmin } = req.body;
+
+//     const existing = await User.findOne({ email });
+//     if (existing) {
+//       return res.status(400).json({ message: "Email đã tồn tại" });
+//     }
+
+//     const newUser = new User({
+//       name,
+//       email,
+//       password,
+//       phone,
+//       address,
+//       isAdmin,
+//     });
+//     await newUser.save();
+
+//     res
+//       .status(201)
+//       .json({ message: "Tạo người dùng thành công", user: newUser });
+//   } catch (error) {
+//     res.status(500).json({ message: "Lỗi khi tạo người dùng" });
+//   }
+// };
+// const getAllUsersRaw = async (req, res) => {
+//   try {
+//     const users = await User.find({})
+//       .select("-password")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json(users);
+//   } catch (error) {
+//     console.error("Lỗi khi xuất tất cả người dùng:", error);
+//     res.status(500).json({ message: "Lỗi khi lấy tất cả người dùng" });
+//   }
+// };
+
+// const loginWithGoogle = async (req, res) => {
+//   const { token: googleToken } = req.body;
+
+//   if (!googleToken)
+//     return res.status(400).json({ message: "Thiếu token từ Google" });
+
+//   try {
+//     // Gửi yêu cầu xác minh tới Google
+//     const googleRes = await axios.get(
+//       `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${googleToken}`
+//     );
+
+//     const { email, name, picture, sub } = googleRes.data;
+
+//     // Tìm user theo email
+//     let user = await User.findOne({ email });
+
+//     if (!user) {
+//       // Nếu chưa có user, tạo mới
+//       user = await User.create({
+//         name,
+//         email,
+//         avatar: picture,
+//         provider: "google",
+//         providerId: sub,
+//         password: null, // Vì không dùng mật khẩu
+//       });
+//     }
+
+//     // Tạo access token
+//     const accessToken = jwt.sign(
+//       { id: user._id, isAdmin: user.isAdmin },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "7d" }
+//     );
+
+//     res.json({
+//       message: "Đăng nhập Google thành công",
+//       user,
+//       accessToken,
+//     });
+//   } catch (error) {
+//     console.error("Lỗi Google Login:", error.response?.data || error.message);
+//     res.status(401).json({ message: "Xác thực Google thất bại" });
+//   }
+// };
+// const loginWithFacebook = async (req, res) => {
+//   const { accessToken, userID } = req.body;
+
+//   if (!accessToken || !userID)
+//     return res.status(400).json({ message: "Thiếu thông tin từ Facebook" });
+
+//   try {
+//     // Gọi Graph API để lấy thông tin user
+//     const fbRes = await axios.get(
+//       `https://graph.facebook.com/v12.0/${userID}`,
+//       {
+//         params: {
+//           access_token: accessToken,
+//           fields: "id,name,email,picture",
+//         },
+//       }
+//     );
+
+//     const { email, name, id, picture } = fbRes.data;
+
+//     // Tìm hoặc tạo user
+//     let user = await User.findOne({ email });
+
+//     if (!user) {
+//       user = await User.create({
+//         name,
+//         email,
+//         avatar: picture.data.url,
+//         provider: "facebook",
+//         providerId: id,
+//         password: null,
+//       });
+//     }
+
+//     const token = jwt.sign(
+//       { id: user._id, isAdmin: user.isAdmin },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "7d" }
+//     );
+
+//     res.json({
+//       message: "Đăng nhập Facebook thành công",
+//       user,
+//       accessToken: token,
+//     });
+//   } catch (error) {
+//     console.error("Lỗi Facebook Login:", error.response?.data || error.message);
+//     res.status(401).json({ message: "Xác thực Facebook thất bại" });
+//   }
+// };
 
 module.exports = {
   registerUser,

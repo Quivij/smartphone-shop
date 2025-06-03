@@ -1,33 +1,25 @@
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../api/auth";
 import { toast } from "react-toastify";
-import { useUserStore } from "../store/useUserStore"; // Import useUserStore để sử dụng trạng thái người dùng
+import { useUserStore } from "../store/useUserStore";
 
 export const useLogout = () => {
   const navigate = useNavigate();
-  const { setUser } = useUserStore(); // Lấy phương thức setUser từ Zustand store
+  const logout = useUserStore(state => state.logout);
 
   const handleLogout = async () => {
     try {
-      // Gọi API logout
-      await logoutUser();
+      // Call logout from the store
+      logout();
 
-      // Xóa token và thông tin người dùng khỏi localStorage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-
-      // Cập nhật trạng thái user trong store về null
-      setUser(null); // Đặt lại user thành null trong Zustand store
-
-      // Hiển thị thông báo đăng xuất thành công
+      // Show success message
       toast.success("Đăng xuất thành công!");
 
-      // Điều hướng về trang đăng nhập
+      // Navigate to login page
       navigate("/login");
     } catch (err) {
-      // Xử lý lỗi khi logout
+      // Handle logout error
       const errorMessage = err.response?.data?.message || "Đăng xuất thất bại";
-      toast.error(errorMessage); // Hiển thị thông báo lỗi
+      toast.error(errorMessage);
     }
   };
 

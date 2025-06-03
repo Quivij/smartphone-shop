@@ -12,6 +12,8 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const couponRoutes = require("./routes/couponRoutes");
 
 const session = require("express-session");
+const cartRoutes = require('./routes/cartRoutes');
+const cartitemRoutes = require('./routes/cartitemRoutes');
 
 const path = require("path");
 
@@ -49,7 +51,8 @@ app.use(morgan("dev")); // Ghi log request
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-
+app.use('/api/cart', cartRoutes);
+app.use('/api/cartitem', cartitemRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/coupons", couponRoutes);

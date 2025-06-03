@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { utils, writeFile } from "xlsx";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../api/api";
+import BackButton from '../../components/BackButton';
 
 const AdminOrdersPage = () => {
   const queryClient = useQueryClient();
@@ -108,10 +109,13 @@ const AdminOrdersPage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
+      <div className="flex items-center justify-between">
+        <h1 className="text-4xl font-bold text-gray-800">Quản lý đơn hàng</h1>
+        <BackButton />
+      </div>
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Quản lý đơn hàng</h2>
         <button
           onClick={exportToExcel}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow text-sm"
