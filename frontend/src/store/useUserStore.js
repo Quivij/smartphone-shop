@@ -10,6 +10,12 @@ export const useUserStore = create(
       setUser: (userData) => set({ user: userData }),
       clearUser: () => set({ user: null }),
       setHasHydrated: (state) => set({ hasHydrated: state }), // ✅ Thêm hàm cập nhật hydration
+      logout: () => {
+        // Clear user data
+        set({ user: null });
+        // Clear any stored tokens
+        localStorage.removeItem('token');
+      },
     }),
     {
       name: "user-storage",

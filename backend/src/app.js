@@ -8,13 +8,9 @@ const { errorHandler } = require("./middleware/errorMiddleware");
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const dashboardRoute = require("./routes/dashboardRoute");
-
 const couponRoutes = require("./routes/couponRoutes");
-
 const session = require("express-session");
 const cartRoutes = require('./routes/cartRoutes');
-const cartitemRoutes = require('./routes/cartitemRoutes');
-
 const path = require("path");
 
 // Load biến môi trường từ file .env
@@ -52,7 +48,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/cartitem', cartitemRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/coupons", couponRoutes);

@@ -1,19 +1,49 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Coupon = require("../models/Coupon");
 
 class OrderService {
   async createOrder(orderData, userId) {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice } = orderData;
+    const { orderItems,
+      shippingAddress, 
+      paymentMethod,
+      totalPrice,
+      discountAmount = 0,
+      finalPrice,
+      couponCode = "",
+    } = orderData;
+
     if (!orderItems || orderItems.length === 0) {
       throw new Error("Không có sản phẩm nào trong đơn hàng");
     }
+
+    // Validate coupon if provided
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      if (!coupon) {
+        throw new Error("Mã giảm giá không hợp lệ");
+      }
+      if (new Date(coupon.expireDate) < Date.now()) {
+        throw new Error("Mã giảm giá đã hết hạn");
+      }
+      if (totalPrice < coupon.minOrderValue) {
+        throw new Error(`Đơn hàng phải từ ${coupon.minOrderValue}₫ để dùng mã này`);
+      }
+    }
+
     const newOrder = new Order({
       user: userId,
       orderItems,
       shippingAddress,
       paymentMethod,
       totalPrice,
+      discountAmount,
+      finalPrice,
+      couponCode: couponCode.toUpperCase(),
+      isPaid: paymentMethod !== "COD",
+      status: "Processing",
     });
+
     return await newOrder.save();
   }
 
@@ -56,8 +86,11 @@ class OrderService {
     if (order.isDelivered) {
       throw new Error("Đơn hàng đã được giao");
     }
+    //đánh dấu đơn hàng là đã giao
     order.isDelivered = true;
     order.deliveredAt = new Date();
+    order.status = "Delivered";
+
     for (const item of order.orderItems) {
       const product = await Product.findById(item.product);
       if (!product) continue;
@@ -67,7 +100,9 @@ class OrderService {
       if (variant) {
         variant.stock = Math.max(0, variant.stock - item.quantity);
         variant.sold = (variant.sold || 0) + item.quantity;
+
         product.markModified("variants");
+        
         product.sold = product.variants.reduce(
           (total, v) => total + (v.sold || 0),
           0

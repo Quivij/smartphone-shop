@@ -19,6 +19,24 @@ const getCart = async (req, res) => {
   }
 };
 
+// Clear user's cart
+const clearCart = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+
+    cart.items = [];
+    await cart.save();
+
+    res.json({ message: 'Cart cleared successfully' });
+  } catch (error) {
+    console.error('Clear cart error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Add item to cart
 const addToCart = async (req, res) => {
   try {
@@ -151,5 +169,6 @@ module.exports = {
   getCart,
   addToCart,
   updateCartItem,
-  removeFromCart
+  removeFromCart,
+  clearCart
 };

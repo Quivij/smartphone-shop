@@ -90,8 +90,15 @@ export const useCartStore = create(
           : 0;
       },
 
-      clearCart: () => {
-        set({ cartItems: [], error: null });
+      clearCart: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          await cartApi.clearCart();
+          set({ cartItems: [], error: null, isLoading: false });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
       },
     }),
     {

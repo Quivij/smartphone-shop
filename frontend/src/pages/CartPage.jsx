@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { useCartStore } from '../store/useCartStore';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 import { TiShoppingCart } from "react-icons/ti";
 
 const CartPage = () => {
   const { cartItems, isLoading, error, fetchCart, updateQuantity, removeFromCart } = useCartStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
@@ -16,6 +17,13 @@ const CartPage = () => {
     return cartItems.reduce((total, item) => {
       return total + (item.variant.price * item.quantity);
     }, 0);
+  };
+
+  const handleCheckout = () => {
+    if (cartItems.length === 0) {
+      return;
+    }
+    navigate('/checkout');
   };
 
   if (isLoading) {
@@ -135,8 +143,11 @@ const CartPage = () => {
                 </div>
               </div>
             </div>
-            <button className="w-full bg-blue-500 text-white py-2 rounded-lg mt-4 hover:bg-blue-600">
-              Proceed to Checkout
+            <button 
+              onClick={handleCheckout}
+              className="w-full bg-blue-500 text-white py-2 rounded-lg mt-4 hover:bg-blue-600"
+            >
+              Thanh toán
             </button>
           </div>
         </div>

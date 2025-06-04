@@ -8,13 +8,14 @@ const {
 const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+// Public routes - no authentication required
 router.post("/validate", validateCoupon);
 
-// Admin tạo mã khuyến mãi
-router.post("/", authMiddleware, isAdmin, createCoupon);
-router.get("/", authMiddleware, isAdmin, getAllCoupons);
-router.delete("/:id", authMiddleware, isAdmin, deleteCouponById);
-
-// Khách hàng kiểm tra mã
+// Admin routes - require authentication and admin role
+router.use(authMiddleware);
+router.post("/", isAdmin, createCoupon);
+router.get("/", isAdmin, getAllCoupons);
+router.delete("/:id", isAdmin, deleteCouponById);
 
 module.exports = router;

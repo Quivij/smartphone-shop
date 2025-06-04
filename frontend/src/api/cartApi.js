@@ -31,7 +31,7 @@ const cartApi = {
   updateCartItem: async (itemId, quantity) => {
     try {
       console.log('Updating cart item:', { itemId, quantity });
-      const response = await api.put(`/api/cart/item/${itemId}`,
+      const response = await api.put(`/cart/item/${itemId}`,
         { quantity },
         {
           headers: {
@@ -71,7 +71,7 @@ const cartApi = {
   // Remove item from cart
   removeFromCart: async (itemId) => {
     try {
-      const response = await api.delete(`/api/cart/item/${itemId}`, {
+      const response = await api.delete(`/cart/item/${itemId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -79,6 +79,21 @@ const cartApi = {
       return response.data;
     } catch (error) {
       console.error('Error removing item:', error.response?.data);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Clear cart
+  clearCart: async () => {
+    try {
+      const response = await api.delete('/cart/clear', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error clearing cart:', error.response?.data);
       throw error.response?.data || error.message;
     }
   },

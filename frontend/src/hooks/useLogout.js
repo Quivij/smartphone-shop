@@ -4,9 +4,9 @@ import { useUserStore } from "../store/useUserStore";
 
 export const useLogout = () => {
   const navigate = useNavigate();
-  const logout = useUserStore(state => state.logout);
+  const logout = useUserStore((state) => state.logout);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
       // Call logout from the store
       logout();
@@ -17,9 +17,10 @@ export const useLogout = () => {
       // Navigate to login page
       navigate("/login");
     } catch (err) {
-      // Handle logout error
-      const errorMessage = err.response?.data?.message || "Đăng xuất thất bại";
-      toast.error(errorMessage);
+      console.error("Logout error:", err);
+      // If there's an error, still try to clear the state and redirect
+      useUserStore.getState().logout();
+      navigate("/login");
     }
   };
 

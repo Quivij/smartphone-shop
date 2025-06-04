@@ -1,5 +1,6 @@
 // controllers/couponController.js
 const couponService = require("../services/couponService");
+const Coupon = require("../models/Coupon");
 
 exports.createCoupon = async (req, res) => {
   try {
@@ -12,32 +13,39 @@ exports.createCoupon = async (req, res) => {
 
 exports.validateCoupon = async (req, res) => {
   try {
-<<<<<<< HEAD
+    console.log("=== Coupon Validation Request ===");
+    console.log("Request body:", req.body);
+    console.log("Request headers:", req.headers);
+    console.log("Request method:", req.method);
+    console.log("Request path:", req.path);
+    
     const { code, orderTotal } = req.body;
-    const coupon = await couponService.validateCoupon(code, orderTotal);
-    res.status(200).json({ valid: true, coupon });
-=======
-    const code = req.query.code?.toLowerCase();
+    
+    if (!code) {
+      console.log("Missing coupon code");
+      return res.status(400).json({ message: "Thiếu mã giảm giá" });
+    }
 
-    if (!code) return res.status(400).json({ message: "Thiếu mã giảm giá" });
+    // Validate orderTotal
+    const total = Number(orderTotal);
+    if (isNaN(total) || total <= 0) {
+      console.log("Invalid order total:", orderTotal);
+      return res.status(400).json({ 
+        message: "Tổng đơn hàng không hợp lệ",
+        details: "Tổng đơn hàng phải là một số lớn hơn 0"
+      });
+    }
 
-    const coupon = await Coupon.findOne({ code, isActive: true });
-
-    if (!coupon)
-      return res.status(404).json({ message: "Mã không tồn tại hoặc hết hạn" });
-
-    if (new Date(coupon.expireDate) < Date.now())
-      return res.status(400).json({ message: "Mã đã hết hạn" });
-
-    res.status(200).json({
-      valid: true,
-      type: coupon.discountType,
-      value: coupon.discountValue,
-      coupon,
-    });
->>>>>>> 37d8ccaa738ad31a72490cb942aaa131afe07ee2
+    console.log("Validating coupon:", { code, total });
+    const result = await couponService.validateCoupon(code, total);
+    console.log("Validation result:", result);
+    res.status(200).json(result);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Coupon validation error:", err);
+    res.status(err.status || 500).json({ 
+      message: err.message || "Lỗi server",
+      details: err.details || "Vui lòng thử lại sau"
+    });
   }
 };
 
@@ -49,14 +57,6 @@ exports.getAllCoupons = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-<<<<<<< HEAD
-=======
-
-exports.getAllCoupons = async (req, res) => {
-  const coupons = await Coupon.find();
-  res.json(coupons);
-};
->>>>>>> 37d8ccaa738ad31a72490cb942aaa131afe07ee2
 
 exports.deleteCouponById = async (req, res) => {
   try {

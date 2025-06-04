@@ -5,6 +5,7 @@ const {
   addToCart,
   updateCartItem,
   removeFromCart,
+  clearCart
 } = require('../controllers/cartController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 
@@ -22,5 +23,8 @@ router.put('/item/:id', updateCartItem);
 
 // Remove item from cart
 router.delete('/item/:id', removeFromCart);
+
+// Clear cart
+router.delete('/clear', clearCart);
 
 module.exports = router;

@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../store/useCartStore";
 import { useCreateOrder } from "../hooks/useCreateOrder";
 import { useValidateCoupon } from "../hooks/useValidateCoupon";
 import { toast } from "react-toastify";
 
+const formatCurrency = (value) => {
+  if (isNaN(value)) return "0₫";
+  return value.toLocaleString("vi-VN") + "₫";
+};
 const CheckoutPage = () => {
-  const { cartItems, clearCart } = useCartStore();
+  const { cartItems, clearCart, fetchCart, isLoading: cartLoading } = useCartStore();
   const navigate = useNavigate();
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -22,11 +26,24 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
 
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        await fetchCart();
+      } catch (error) {
+        toast.error("Không thể tải giỏ hàng. Vui lòng thử lại.");
+        navigate("/cart");
+      }
+    };
+    loadCart();
+  }, [fetchCart, navigate]);
+
   const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + (Number(item.variant.price) * Number(item.quantity)),
     0
   );
-  const finalPrice = totalPrice - discountAmount;
+  // Thêm Math.max để đảm bảo không âm
+  const finalPrice = Math.max(0, totalPrice - discountAmount);  
 
   const { mutate: createOrder, isPending } = useCreateOrder();
   const { mutate: validateCoupon } = useValidateCoupon();
@@ -41,8 +58,12 @@ const CheckoutPage = () => {
       return toast.error("Vui lòng nhập mã giảm giá");
     }
 
+    if (!totalPrice || totalPrice <= 0) {
+      return toast.error("Tổng đơn hàng không hợp lệ");
+    }
+
     validateCoupon(
-      { code: couponCode.trim().toLowerCase(), orderTotal: totalPrice },
+      { code: couponCode.trim().toUpperCase(), orderTotal: totalPrice },
       {
         onSuccess: (res) => {
           const coupon = res.coupon;
@@ -57,11 +78,11 @@ const CheckoutPage = () => {
             );
             setDiscountAmount(discount);
             toast.success(
-              `Giảm ${coupon.discountValue}% (${discount.toLocaleString()}₫)`
+              `Giảm ${coupon.discountValue}% (${formatCurrency(discount)})`
             );
           } else if (coupon.discountType === "amount") {
             setDiscountAmount(coupon.discountValue);
-            toast.success(`Giảm ${coupon.discountValue.toLocaleString()}₫`);
+            toast.success(`Giảm ${formatCurrency(coupon.discountValue)}`);
           } else {
             setDiscountAmount(0);
             toast.error("Loại giảm giá không xác định");
@@ -70,7 +91,7 @@ const CheckoutPage = () => {
         onError: (err) => {
           setDiscountAmount(0);
           toast.error(
-            err?.response?.data?.message || "Mã không hợp lệ hoặc đã hết hạn"
+            err?.message || "Mã không hợp lệ hoặc đã hết hạn"
           );
         },
       }
@@ -78,13 +99,17 @@ const CheckoutPage = () => {
   };
 
   const handleOrder = () => {
+    if (cartItems.length === 0) {
+      return toast.error("Giỏ hàng trống");
+    }
+
     const orderData = {
       orderItems: cartItems.map((item) => ({
-        product: item.productId,
-        color: item.color,
-        storage: item.storage,
+        product: item.product._id,
+        color: item.variant.color,
+        storage: item.variant.storage,
         quantity: item.quantity,
-        price: item.price,
+        price: item.variant.price,
       })),
       shippingAddress: shippingInfo,
       paymentMethod,
@@ -93,6 +118,11 @@ const CheckoutPage = () => {
       finalPrice,
       couponCode: couponCode.trim(),
     };
+    console.log("Cart items:", cartItems);
+    console.log("Order data:", orderData);
+    console.log("Total price:", totalPrice);
+    console.log("Discount amount:", discountAmount);
+    console.log("Final price:", finalPrice);
 
     const toastId = toast.loading("Đang xử lý đơn hàng...");
 
@@ -119,6 +149,24 @@ const CheckoutPage = () => {
     });
   };
 
+  if (cartLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Đang tải...</div>;
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-xl mb-4">Giỏ hàng trống</p>
+        <button
+          onClick={() => navigate("/products")}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Tiếp tục mua sắm
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">Thông tin giao hàng</h2>
@@ -138,6 +186,7 @@ const CheckoutPage = () => {
           value={shippingInfo[name]}
           onChange={handleInputChange}
           className="w-full border p-2 mb-2"
+          required
         />
       ))}
 
@@ -174,18 +223,17 @@ const CheckoutPage = () => {
       </div>
 
       <div className="text-lg mb-2">
-        Tổng tiền:{" "}
-        <span className="font-medium">{totalPrice.toLocaleString()}₫</span>
+        Tổng tiền: <span className="font-medium">{formatCurrency(totalPrice)}</span>
       </div>
 
       {discountAmount > 0 && (
         <div className="text-green-600 mb-2">
-          Giảm giá: -{discountAmount.toLocaleString()}₫
+         Giảm giá: -{formatCurrency(discountAmount)}
         </div>
       )}
 
       <div className="font-bold text-xl mb-4">
-        Thanh toán: {finalPrice.toLocaleString()}₫
+        Thanh toán: {formatCurrency(finalPrice)}
       </div>
 
       <button
