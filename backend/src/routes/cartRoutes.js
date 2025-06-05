@@ -1,30 +1,30 @@
-const express = require('express');
-const router = express.Router();
+const express = require("express");
 const {
   getCart,
   addToCart,
   updateCartItem,
   removeFromCart,
-  clearCart
-} = require('../controllers/cartController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+  clearCart,
+  removeMultipleItemsFromCart,
+} = require("../controllers/cartController");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
-// Apply authentication middleware to all routes
-router.use(authMiddleware);
+const router = express.Router();
 
-// Get user's cart
-router.get('/', getCart);
+// GET /api/cart - lấy giỏ hàng người dùng
+router.get("/", authMiddleware, getCart);
 
-// Add item to cart
-router.post('/add', addToCart);
+// POST /api/cart - thêm sản phẩm vào giỏ
+router.post("/", authMiddleware, addToCart);
 
-// Update cart item quantity
-router.put('/item/:id', updateCartItem);
+// PUT /api/cart - cập nhật số lượng
+router.put("/update", authMiddleware, updateCartItem);
 
-// Remove item from cart
-router.delete('/item/:id', removeFromCart);
+// DELETE /api/cart - xóa sản phẩm khỏi giỏ
+router.delete("/remove", authMiddleware, removeFromCart);
 
-// Clear cart
-router.delete('/clear', clearCart);
+// DELETE /api/cart/all - xóa toàn bộ giỏ hàng
+router.delete("/clear", authMiddleware, clearCart);
+router.delete("/remove-multiple", authMiddleware, removeMultipleItemsFromCart);
 
 module.exports = router;
