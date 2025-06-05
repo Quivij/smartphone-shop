@@ -11,6 +11,7 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const couponRoutes = require("./routes/couponRoutes");
 const session = require("express-session");
 const cartRoutes = require('./routes/cartRoutes');
+const authRoutes = require("./routes/authRoutes");
 const path = require("path");
 
 // Load biến môi trường từ file .env
@@ -51,7 +52,7 @@ app.use('/api/cart', cartRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/coupons", couponRoutes);
-
+app.use("/api/auth", authRoutes);
 // Middleware xử lý lỗi
 app.use(errorHandler);
 

@@ -59,3 +59,7 @@ export const createUser = async (userData) => {
   const res = await api.post("/users", userData);
   return res.data;
 };
+export const loginWithGoogle = async (token) => {
+  const response = await api.post("users/google-login", { token });
+  return response.data;
+}

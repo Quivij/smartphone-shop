@@ -6,12 +6,16 @@ import { useLogin } from "../hooks/useLogin";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
+import { useGoogleLogin } from "@react-oauth/google";
+import api from "../api/api";
+import { useUserStore } from "../store/useUserStore";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { loading, error, successMessage, handleLogin } = useLogin();
+  const { setUser } = useUserStore();
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -25,10 +29,40 @@ const Login = () => {
 
     if (success) {
       toast.success(successMessage || "Đăng nhập thành công!");
-      navigate("/"); // Chuyển hướng đến trang chủ sau khi đăng nhập
+      navigate("/");
     } else {
       toast.error(error || "Đăng nhập thất bại");
     }
+  };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (response) => {
+      try {
+        const result = await api.post("/auth/google", {
+          token: response.access_token,
+        });
+        
+        // Store the token
+        localStorage.setItem("token", result.data.accessToken);
+        
+        // Update user state
+        setUser(result.data.user);
+        toast.success("Đăng nhập Google thành công!");
+        navigate("/");
+      } catch (error) {
+        console.error("Google login error:", error);
+        toast.error(error.response?.data?.message || "Đăng nhập Google thất bại");
+      }
+    },
+    onError: (error) => {
+      console.error("Google login error:", error);
+      toast.error("Đăng nhập Google thất bại");
+    },
+    flow: 'implicit'
+  });
+
+  const handleFacebookLogin = () => {
+    window.location.href = `http://localhost:3001/auth/facebook`;
   };
 
   return (
@@ -63,6 +97,26 @@ const Login = () => {
 
           <Button text={loading ? "Đang đăng nhập..." : "Đăng Nhập"} />
         </form>
+
+        {/* OAuth Buttons */}
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            onClick={() => handleGoogleLogin()}
+            className="flex items-center justify-center gap-2 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 transition"
+          >
+            <FcGoogle size={20} />
+            Đăng nhập với Google
+          </button>
+
+          <button
+            onClick={handleGoogleLogin}
+            // onClick={handleFacebookLogin}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          >
+            <FaFacebookF size={18} />
+            Đăng nhập với Facebook
+          </button>
+        </div>
 
         <p className="mt-4 text-center text-gray-600">
           Chưa có tài khoản?{" "}

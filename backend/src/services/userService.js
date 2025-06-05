@@ -3,7 +3,20 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const saltRounds = 10;
 const jwt = require("jsonwebtoken");
+const {OAuth2Client} = require("google-auth-library");
+const axios = require("axios");
 
+const clientId = process.env.VITE_GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(clientId);
+
+async function verifyToken(token) {
+  const tiket = await client.verifyIdToken({
+    idToken: token,
+    audience: clientId,
+  });
+  const payload = tiket.getPayload();
+  return payload;
+}
 const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user._id, 
@@ -179,19 +192,21 @@ const getAllUsersRawSevice = async () => {
       .sort({ createdAt: -1 });
     return users;
 };
-
+console.log("clientId", clientId);
   // Đăng nhập bằng Google
-const loginWithGoogleService= async (googleToken) => {
-    if (!googleToken) throw new Error('Thiếu token từ Google');
+const loginWithGoogleService = async (token) => {
+  if (!token) throw new Error('Thiếu token từ Google');
 
-    const googleRes = await axios.get(
-      `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${googleToken}`
-    );
+  try {
+    // Get user info from Google
+    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-    const { email, name, picture, sub } = googleRes.data;
+    const { email, name, picture, sub } = response.data;
 
-    let user = await User.findOne({ email });
-
+    // Find or create user
+    let user = await User.findOne({ email, providerId: sub });
     if (!user) {
       user = await User.create({
         name,
@@ -203,13 +218,32 @@ const loginWithGoogleService= async (googleToken) => {
       });
     }
 
+    // Generate JWT token
     const accessToken = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
+      { 
+        id: user._id, 
+        isAdmin: user.isAdmin,
+        name: user.name,
+        email: user.email 
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return { user, accessToken };
+    return { 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        isAdmin: user.isAdmin
+      }, 
+      accessToken 
+    };
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    throw new Error('Xác thực Google thất bại');
+  }
 };
 
   // Đăng nhập bằng Facebook
@@ -251,8 +285,7 @@ const loginWithFacebookService = async (accessToken) => {
 
   // Cập nhật người dùng (đã triển khai trước đó)
 
-};
-  
+}; 
 
 module.exports = {
     registerUserService,
@@ -265,5 +298,4 @@ module.exports = {
     getAllUsersRawSevice,
     loginWithGoogleService,
     loginWithFacebookService,
-
 };

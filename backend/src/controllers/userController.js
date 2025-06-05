@@ -2,10 +2,19 @@ const User = require("../models/User"); // Đảm bảo đường dẫn đúng
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
+const axios = require("axios");
 const { registerUserService, loginUserService, getUserInfoService, getAllUsersService, getUserDetailService,getAllUsersRawSevice,
   updateUserService, createUserService, loginWithGoogleService, loginWithFacebookService
 } = require("../services/userService");
 
+async function verifyToken(token) {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: clientId,
+  });
+  const payload = ticket.getPayload();
+  return payload;
+}
 const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user._id, 
@@ -278,26 +287,20 @@ const getAllUsersRaw = async(req, res) => {
 };
 
   // Đăng nhập bằng Google
-const loginWithGoogle = async(req, res) => {
-    try {
-      const { token: googleToken } = req.body;
-      const { user, accessToken } = await UserService.loginWithGoogleService(googleToken);
-      
-      res.json({
-        message: 'Đăng nhập Google thành công',
-        user,
-        accessToken,
-      });
-    } catch (error) {
-      console.error('Lỗi Google Login:', error);
-      
-      if (error.message === 'Thiếu token từ Google') {
-        return res.status(400).json({ message: error.message });
-      }
-      res.status(401).json({ message: 'Xác thực Google thất bại' });
+const loginWithGoogle = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ message: "Token không hợp lệ" });
     }
-  };
 
+    const result = await loginWithGoogleService(token);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Lỗi Google Login:", error);
+    res.status(401).json({ message: error.message || "Đăng nhập Google thất bại" });
+  }
+};
   // Đăng nhập bằng Facebook
 const loginWithFacebook = async (req, res) => {
     try {
@@ -318,141 +321,6 @@ const loginWithFacebook = async (req, res) => {
       res.status(401).json({ message: 'Xác thực Facebook thất bại' });
     }
   };
-// const createUser = async (req, res) => {
-//   try {
-//     const { name, email, password, phone, address, isAdmin } = req.body;
-
-//     const existing = await User.findOne({ email });
-//     if (existing) {
-//       return res.status(400).json({ message: "Email đã tồn tại" });
-//     }
-
-//     const newUser = new User({
-//       name,
-//       email,
-//       password,
-//       phone,
-//       address,
-//       isAdmin,
-//     });
-//     await newUser.save();
-
-//     res
-//       .status(201)
-//       .json({ message: "Tạo người dùng thành công", user: newUser });
-//   } catch (error) {
-//     res.status(500).json({ message: "Lỗi khi tạo người dùng" });
-//   }
-// };
-// const getAllUsersRaw = async (req, res) => {
-//   try {
-//     const users = await User.find({})
-//       .select("-password")
-//       .sort({ createdAt: -1 });
-
-//     res.status(200).json(users);
-//   } catch (error) {
-//     console.error("Lỗi khi xuất tất cả người dùng:", error);
-//     res.status(500).json({ message: "Lỗi khi lấy tất cả người dùng" });
-//   }
-// };
-
-// const loginWithGoogle = async (req, res) => {
-//   const { token: googleToken } = req.body;
-
-//   if (!googleToken)
-//     return res.status(400).json({ message: "Thiếu token từ Google" });
-
-//   try {
-//     // Gửi yêu cầu xác minh tới Google
-//     const googleRes = await axios.get(
-//       `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${googleToken}`
-//     );
-
-//     const { email, name, picture, sub } = googleRes.data;
-
-//     // Tìm user theo email
-//     let user = await User.findOne({ email });
-
-//     if (!user) {
-//       // Nếu chưa có user, tạo mới
-//       user = await User.create({
-//         name,
-//         email,
-//         avatar: picture,
-//         provider: "google",
-//         providerId: sub,
-//         password: null, // Vì không dùng mật khẩu
-//       });
-//     }
-
-//     // Tạo access token
-//     const accessToken = jwt.sign(
-//       { id: user._id, isAdmin: user.isAdmin },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
-
-//     res.json({
-//       message: "Đăng nhập Google thành công",
-//       user,
-//       accessToken,
-//     });
-//   } catch (error) {
-//     console.error("Lỗi Google Login:", error.response?.data || error.message);
-//     res.status(401).json({ message: "Xác thực Google thất bại" });
-//   }
-// };
-// const loginWithFacebook = async (req, res) => {
-//   const { accessToken, userID } = req.body;
-
-//   if (!accessToken || !userID)
-//     return res.status(400).json({ message: "Thiếu thông tin từ Facebook" });
-
-//   try {
-//     // Gọi Graph API để lấy thông tin user
-//     const fbRes = await axios.get(
-//       `https://graph.facebook.com/v12.0/${userID}`,
-//       {
-//         params: {
-//           access_token: accessToken,
-//           fields: "id,name,email,picture",
-//         },
-//       }
-//     );
-
-//     const { email, name, id, picture } = fbRes.data;
-
-//     // Tìm hoặc tạo user
-//     let user = await User.findOne({ email });
-
-//     if (!user) {
-//       user = await User.create({
-//         name,
-//         email,
-//         avatar: picture.data.url,
-//         provider: "facebook",
-//         providerId: id,
-//         password: null,
-//       });
-//     }
-
-//     const token = jwt.sign(
-//       { id: user._id, isAdmin: user.isAdmin },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
-
-//     res.json({
-//       message: "Đăng nhập Facebook thành công",
-//       user,
-//       accessToken: token,
-//     });
-//   } catch (error) {
-//     console.error("Lỗi Facebook Login:", error.response?.data || error.message);
-//     res.status(401).json({ message: "Xác thực Facebook thất bại" });
-//   }
-// };
 
 module.exports = {
   registerUser,
