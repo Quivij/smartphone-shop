@@ -32,6 +32,7 @@ body {
   min-height: 100vh;
   padding: 20px;
   background: linear-gradient(135deg, #1e1e1e, #3a3a3a);
+  transition: var(--transition);
 }
 
 /* Links */

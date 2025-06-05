@@ -4,6 +4,7 @@ import api from "../api/api";
 
 const createOrder = async (orderData) => {
   const res = await api.post("/orders", orderData);
+  // console.log("Order created successfully:", orderData);
   return res.data;
 };
 

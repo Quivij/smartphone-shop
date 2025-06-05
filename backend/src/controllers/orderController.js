@@ -4,7 +4,9 @@ const Product = require("../models/Product");
 // [POST] /api/orders - Tạo đơn hàng mới
 const createOrder = async (req, res) => {
   try {
-    const savedOrder = await orderService.createOrder(req.body, req.user.id);
+    const userId =  req.user.id;
+    const orderData = req.body;
+    const savedOrder = await orderService.createOrder(orderData, userId);
     res.status(201).json(savedOrder);
   } catch (error) {
     res.status(500).json({ message: error.message });

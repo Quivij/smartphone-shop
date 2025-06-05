@@ -19,7 +19,7 @@ class OrderService {
 
     // Validate coupon if provided
     if (couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
       if (!coupon) {
         throw new Error("Mã giảm giá không hợp lệ");
       }
@@ -39,11 +39,10 @@ class OrderService {
       totalPrice,
       discountAmount,
       finalPrice,
-      couponCode: couponCode.toUpperCase(),
+      couponCode: couponCode,
       isPaid: paymentMethod !== "COD",
       status: "Processing",
     });
-
     return await newOrder.save();
   }
 

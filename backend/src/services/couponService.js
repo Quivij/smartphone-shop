@@ -4,7 +4,7 @@ class CouponService {
   async createCoupon(data) {
     const newCoupon = new Coupon({
       ...data,
-      code: data.code.toLowerCase()
+      code: data.code
     });
     return await newCoupon.save();
   }

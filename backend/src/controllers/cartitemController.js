@@ -1,6 +1,6 @@
 const cartitemService = require('../services/cartitemService');
 const ProductService = require('../services/productService');
-const UserService = require('../services/userService');
+// const UserService = require('../services/userService');
 
   // GET /api/cart
 const getCart = async (req, res) => {

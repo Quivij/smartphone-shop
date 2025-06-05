@@ -46,8 +46,8 @@ const CartPage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
-          <Link to="/products" className="text-blue-500 hover:text-blue-700">
+          <h2 className="text-2xl font-bold mb-4">Giỏ hàng trống</h2>
+          <Link to="/" className="text-blue-500 hover:text-blue-700">
             Continue Shopping
           </Link>
         </div>
