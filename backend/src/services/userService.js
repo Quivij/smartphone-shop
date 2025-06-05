@@ -11,7 +11,7 @@ const generateAccessToken = (user) => {
       name: user.name, 
       email: user.email },
     process.env.JWT_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "1h" }
   );
 };
 const generateRefreshToken = (user) => {

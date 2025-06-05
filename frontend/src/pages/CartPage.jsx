@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCartStore } from "../store/useCartStore";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CartPage = () => {
@@ -71,9 +71,9 @@ const CartPage = () => {
     return (
       <div className="max-w-4xl mx-auto py-20 text-center">
         <h1 className="text-3xl font-bold mb-4">🛒 Giỏ hàng trống</h1>
-        <p className="text-gray-600 text-lg">
+        <Link to = "/" className="text-gray-600 text-lg">
           Hãy thêm sản phẩm vào giỏ hàng của bạn.
-        </p>
+        </Link>
       </div>
     );
   }

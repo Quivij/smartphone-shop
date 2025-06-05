@@ -1,3 +1,4 @@
+import { removeMultipleItemsFromCart } from "../../../backend/src/services/cartService";
 import api from "./api";
 
 const cartApi = {
@@ -45,7 +46,6 @@ const cartApi = {
       throw error.response?.data || error.message;
     }
   },
-
   // Update quantity by product and storage
   updateQuantity: async (productId, storage, quantity) => {
     try {
@@ -67,7 +67,20 @@ const cartApi = {
       throw error;
     }
   },
-
+  removeMultipleItemsFromCart: async (items) => {
+    try{
+      const response = await api.delete('/cart/remove-multiple', {
+        data: { items },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error removing multiple items:', error.response?.data);
+      throw error.response?.data || error.message;
+    }
+  },
   // Remove item from cart
   removeFromCart: async (itemId) => {
     try {
