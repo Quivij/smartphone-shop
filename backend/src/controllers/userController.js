@@ -239,7 +239,7 @@ const updateUser = async (req, res) => {
       updateData.avatar = avatarPath;
     }
 
-    const updatedUser = await UserService.updateUser(userId, updateData, isAdmin);
+    const updatedUser = await updateUserService(userId, updateData, isAdmin);
 
     res.status(200).json({
       message: "Cập nhật người dùng thành công!",
