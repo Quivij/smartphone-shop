@@ -219,6 +219,31 @@ const getMyProfile = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+const updateMyUssr = async (req, res) => {
+  try {
+    const userId = req.user.id; // Lấy ID người dùng từ token
+    const { name, email, phone, address } = req.body;
+
+    let updateData = { name, email, phone, address };
+
+    // Nếu có file avatar (upload mới)
+    if (req.file) {
+      const avatarPath = `/uploads/avatars/${req.file.filename}`;
+      updateData.avatar = avatarPath;
+    }
+
+    const updatedUser = await updateUserService(userId, updateData);
+
+    res.status(200).json({
+      message: "Cập nhật thông tin thành công!",
+      user: updatedUser,
+    });
+  }
+  catch (error) {
+    console.error("Lỗi cập nhật thông tin người dùng:", error);
+    res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật thông tin người dùng." });
+  }
+};
 const updateUser = async (req, res) => {
   try {
     const isAdmin = req.user.isAdmin;

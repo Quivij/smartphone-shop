@@ -150,11 +150,24 @@ const getUserDetailService = async (userId, currentUser) => {
 
   return user;
 };
+const updateMyUserService = async (userId, updateData) => {
+    if (!userId) {
+      throw new Error("ID người dùng không được để trống");
+    }
+    // Tìm người dùng theo ID và cập nhật thông tin
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+        new: true,
+        runValidators: true,
+    }).select("-password");
+    if (!updatedUser) {
+        throw new Error("Người dùng không tồn tại");
+    }
+  };
 const updateUserService = async (userId, updateData, isAdmin) => {
     if(!userId) {
         throw new Error("ID người dùng không được để trống");
     }
-    if(!isAdmin && updateData.isAdmin==undefined) {
+    if(!isAdmin && 'isAdmin' in updateData) {
         throw new Error("Bạn không có quyền cập nhật thông tin người dùng này");
     }
     if(!isAdmin){
