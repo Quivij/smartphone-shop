@@ -111,7 +111,15 @@ const Dashboard = () => {
               <BarChart data={chartDataWithDiscount}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis />
+                <YAxis
+                  tickFormatter={(value) => {
+                    if (value >= 1_000_000) return `${value / 1_000_000}tr₫`;
+                    if (value >= 1_000) return `${value / 1_000}k₫`;
+                    return value + "₫";
+                  }}
+                  width={80}
+                />
+
                 <Tooltip
                   formatter={(value) => `${value.toLocaleString("vi-VN")}₫`}
                 />

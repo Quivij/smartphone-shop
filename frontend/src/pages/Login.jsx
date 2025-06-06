@@ -41,29 +41,31 @@ const Login = () => {
         const result = await api.post("/auth/google", {
           token: response.access_token,
         });
-        
+
         // Store the token
         localStorage.setItem("token", result.data.accessToken);
-        
+
         // Update user state
         setUser(result.data.user);
         toast.success("Đăng nhập Google thành công!");
         navigate("/");
       } catch (error) {
         console.error("Google login error:", error);
-        toast.error(error.response?.data?.message || "Đăng nhập Google thất bại");
+        toast.error(
+          error.response?.data?.message || "Đăng nhập Google thất bại"
+        );
       }
     },
     onError: (error) => {
       console.error("Google login error:", error);
       toast.error("Đăng nhập Google thất bại");
     },
-    flow: 'implicit'
+    flow: "implicit",
   });
 
-  const handleFacebookLogin = () => {
-    window.location.href = `http://localhost:3001/auth/facebook`;
-  };
+  // const handleFacebookLogin = () => {
+  //   window.location.href = `http://localhost:3001/auth/facebook`;
+  // };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
