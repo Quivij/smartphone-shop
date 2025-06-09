@@ -42,18 +42,25 @@ const Login = () => {
           token: response.access_token,
         });
 
-        // Store the token
         localStorage.setItem("token", result.data.accessToken);
-
-        // Update user state
         setUser(result.data.user);
         toast.success("Đăng nhập Google thành công!");
         navigate("/");
       } catch (error) {
-        console.error("Google login error:", error);
-        toast.error(
-          error.response?.data?.message || "Đăng nhập Google thất bại"
-        );
+        const message =
+          error.response?.data?.message || "Đăng nhập Google thất bại";
+        const emailFromGoogle = error.response?.data?.email;
+
+        toast.error(message);
+
+        // Chờ toast hiển thị xong trước khi redirect
+        setTimeout(() => {
+          if (message.includes("Tài khoản đã tồn tại")) {
+            navigate("/login", {
+              state: { emailFromGoogle },
+            });
+          }
+        }, 300);
       }
     },
     onError: (error) => {

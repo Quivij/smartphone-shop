@@ -3,8 +3,17 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const axios = require("axios");
-const { registerUserService, loginUserService, getUserInfoService, getAllUsersService, getUserDetailService,getAllUsersRawSevice,
-  updateUserService, createUserService, loginWithGoogleService, loginWithFacebookService
+const {
+  registerUserService,
+  loginUserService,
+  getUserInfoService,
+  getAllUsersService,
+  getUserDetailService,
+  getAllUsersRawSevice,
+  updateUserService,
+  createUserService,
+  loginWithGoogleService,
+  loginWithFacebookService,
 } = require("../services/userService");
 
 async function verifyToken(token) {
@@ -17,10 +26,7 @@ async function verifyToken(token) {
 }
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user._id, 
-      isAdmin: user.isAdmin,
-      name: user.name, 
-      email: user.email },
+    { id: user._id, isAdmin: user.isAdmin, name: user.name, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -28,20 +34,29 @@ const generateAccessToken = (user) => {
 
 // Tạo Refresh Token (hết hạn sau 30 ngày)
 const generateRefreshToken = (user) => {
-  return jwt.sign({ 
-      id: user._id, 
+  return jwt.sign(
+    {
+      id: user._id,
       isAdmin: user.isAdmin,
-      name: user.name, 
-      email: user.email}, 
-    process.env.REFRESH_SECRET, {
-    expiresIn: "30d",
-  });
+      name: user.name,
+      email: user.email,
+    },
+    process.env.REFRESH_SECRET,
+    {
+      expiresIn: "30d",
+    }
+  );
 };
 
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
-    const data = await registerUserService(name, email, password, confirmPassword);
+    const data = await registerUserService(
+      name,
+      email,
+      password,
+      confirmPassword
+    );
     const accessToken = generateAccessToken(data);
     const refreshToken = generateRefreshToken(data);
 
@@ -66,8 +81,7 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
   // return res.status(200).json({ name, email, password });
-    
-}
+};
 
 ///////ĐĂNG NHÂP
 const loginUser = async (req, res) => {
@@ -123,7 +137,9 @@ const getUserInfo = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(error.message === "Người dùng không tìm thấy" ? 404 : 500).json({ message: error.message });
+    res
+      .status(error.message === "Người dùng không tìm thấy" ? 404 : 500)
+      .json({ message: error.message });
   }
 };
 
@@ -157,7 +173,12 @@ const getUserDetail = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error(error);
-    const statusCode = error.message === "Người dùng không tồn tại" ? 404 : error.message === "Bạn không có quyền xem thông tin người dùng này" ? 403 : 500;
+    const statusCode =
+      error.message === "Người dùng không tồn tại"
+        ? 404
+        : error.message === "Bạn không có quyền xem thông tin người dùng này"
+        ? 403
+        : 500;
     res.status(statusCode).json({ message: error.message });
   }
 };
@@ -238,10 +259,11 @@ const updateMyUssr = async (req, res) => {
       message: "Cập nhật thông tin thành công!",
       user: updatedUser,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Lỗi cập nhật thông tin người dùng:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật thông tin người dùng." });
+    res
+      .status(500)
+      .json({ message: "Có lỗi xảy ra khi cập nhật thông tin người dùng." });
   }
 };
 const updateUser = async (req, res) => {
@@ -275,43 +297,43 @@ const updateUser = async (req, res) => {
     res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật người dùng." });
   }
 };
-const createUser = async(req, res) => {
-    try {
-      const { name, email, password, phone, address, isAdmin } = req.body;
-      
-      const newUser = await UserService.createUserService({
-        name,
-        email,
-        password,
-        phone,
-        address,
-        isAdmin
-      });
+const createUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, address, isAdmin } = req.body;
 
-      res.status(201).json({ 
-        message: 'Tạo người dùng thành công', 
-        user: newUser 
-      });
-    } catch (error) {
-      if (error.message === 'Email đã tồn tại') {
-        return res.status(400).json({ message: error.message });
-      }
-      res.status(500).json({ message: 'Lỗi khi tạo người dùng' });
+    const newUser = await UserService.createUserService({
+      name,
+      email,
+      password,
+      phone,
+      address,
+      isAdmin,
+    });
+
+    res.status(201).json({
+      message: "Tạo người dùng thành công",
+      user: newUser,
+    });
+  } catch (error) {
+    if (error.message === "Email đã tồn tại") {
+      return res.status(400).json({ message: error.message });
     }
+    res.status(500).json({ message: "Lỗi khi tạo người dùng" });
+  }
 };
 
-  // Lấy tất cả người dùng
-const getAllUsersRaw = async(req, res) => {
-    try {
-      const users = await UserService.getAllUsersService();
-      res.status(200).json(users);
-    } catch (error) {
-      console.error('Lỗi khi xuất tất cả người dùng:', error);
-      res.status(500).json({ message: 'Lỗi khi lấy tất cả người dùng' });
-    }
+// Lấy tất cả người dùng
+const getAllUsersRaw = async (req, res) => {
+  try {
+    const users = await UserService.getAllUsersService();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Lỗi khi xuất tất cả người dùng:", error);
+    res.status(500).json({ message: "Lỗi khi lấy tất cả người dùng" });
+  }
 };
 
-  // Đăng nhập bằng Google
+// Đăng nhập bằng Google
 const loginWithGoogle = async (req, res) => {
   try {
     const { token } = req.body;
@@ -320,32 +342,46 @@ const loginWithGoogle = async (req, res) => {
     }
 
     const result = await loginWithGoogleService(token);
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Lỗi Google Login:", error);
-    res.status(401).json({ message: error.message || "Đăng nhập Google thất bại" });
+
+    // Trả mã lỗi 400 nếu là lỗi logic (ví dụ tài khoản đã tồn tại)
+    if (
+      error.message ===
+      "Tài khoản đã tồn tại. Vui lòng đăng nhập bằng email và mật khẩu."
+    ) {
+      return res.status(400).json({
+        message: error.message,
+        email: error.email || null, // truyền email về nếu có
+      });
+    }
+
+    return res.status(401).json({ message: "Đăng nhập Google thất bại" });
   }
 };
-  // Đăng nhập bằng Facebook
+
+// Đăng nhập bằng Facebook
 const loginWithFacebook = async (req, res) => {
-    try {
-      const { accessToken, userID } = req.body;
-      const { user, accessToken: token } = await UserService.loginWithFacebookService(accessToken, userID);
-      
-      res.json({
-        message: 'Đăng nhập Facebook thành công',
-        user,
-        accessToken: token,
-      });
-    } catch (error) {
-      console.error('Lỗi Facebook Login:', error);
-      
-      if (error.message === 'Thiếu thông tin từ Facebook') {
-        return res.status(400).json({ message: error.message });
-      }
-      res.status(401).json({ message: 'Xác thực Facebook thất bại' });
+  try {
+    const { accessToken, userID } = req.body;
+    const { user, accessToken: token } =
+      await UserService.loginWithFacebookService(accessToken, userID);
+
+    res.json({
+      message: "Đăng nhập Facebook thành công",
+      user,
+      accessToken: token,
+    });
+  } catch (error) {
+    console.error("Lỗi Facebook Login:", error);
+
+    if (error.message === "Thiếu thông tin từ Facebook") {
+      return res.status(400).json({ message: error.message });
     }
-  };
+    res.status(401).json({ message: "Xác thực Facebook thất bại" });
+  }
+};
 
 module.exports = {
   registerUser,

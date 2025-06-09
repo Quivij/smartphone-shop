@@ -4,6 +4,7 @@ import { useCartStore } from "../store/useCartStore";
 import { useCreateOrder } from "../hooks/useCreateOrder";
 import { useValidateCoupon } from "../hooks/useValidateCoupon";
 import { toast } from "react-toastify";
+import AddressSelector from "../components/AddressSelector";
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ const CheckoutPage = () => {
     ward: "",
   });
 
+  const [showAddressPopup, setShowAddressPopup] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -36,6 +38,16 @@ const CheckoutPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setShippingInfo((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddressSelect = ({ province, district, ward }) => {
+    setShippingInfo((prev) => ({
+      ...prev,
+      city: province.name,
+      district: district.name,
+      ward: ward.name,
+    }));
+    setShowAddressPopup(false);
   };
 
   const applyCoupon = () => {
@@ -100,7 +112,6 @@ const CheckoutPage = () => {
 
     createOrder(orderData, {
       onSuccess: async () => {
-        // ✅ Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
         await removeMultipleFromCart(
           selectedItems.map((item) => ({
             productId: item.productId,
@@ -169,23 +180,47 @@ const CheckoutPage = () => {
 
       <h2 className="text-xl font-semibold mb-4">Thông tin giao hàng</h2>
 
-      {[
-        { name: "fullName", placeholder: "Họ và tên" },
-        { name: "phone", placeholder: "Số điện thoại" },
-        { name: "address", placeholder: "Địa chỉ" },
-        { name: "city", placeholder: "Thành phố" },
-        { name: "district", placeholder: "Quận/Huyện" },
-        { name: "ward", placeholder: "Phường/Xã" },
-      ].map(({ name, placeholder }) => (
+      {["fullName", "phone", "address"].map((field) => (
         <input
-          key={name}
-          name={name}
-          placeholder={placeholder}
-          value={shippingInfo[name]}
+          key={field}
+          name={field}
+          placeholder={
+            field === "fullName"
+              ? "Họ và tên"
+              : field === "phone"
+              ? "Số điện thoại"
+              : "Địa chỉ chi tiết"
+          }
+          value={shippingInfo[field]}
           onChange={handleInputChange}
           className="w-full border p-2 mb-2 rounded"
         />
       ))}
+
+      <div className="mb-2">
+        <button
+          onClick={() => setShowAddressPopup(true)}
+          className="w-full border p-2 rounded bg-blue-100 hover:bg-blue-200"
+        >
+          {shippingInfo.ward
+            ? `${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.city}`
+            : "Chọn địa chỉ (Tỉnh/TP, Quận/Huyện, Phường/Xã)"}
+        </button>
+      </div>
+
+      {showAddressPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded shadow-lg w-[90%] max-w-4xl relative">
+            <button
+              onClick={() => setShowAddressPopup(false)}
+              className="absolute top-2 right-3 text-gray-600 text-xl hover:text-black"
+            >
+              ×
+            </button>
+            <AddressSelector onSelect={handleAddressSelect} />
+          </div>
+        </div>
+      )}
 
       <div className="mb-4">
         <label className="font-medium">Phương thức thanh toán:</label>

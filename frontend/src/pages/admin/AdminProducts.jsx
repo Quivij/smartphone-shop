@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { useDebounce } from "../../hooks/useDebounce";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import BackButton from '../../components/BackButton';
+import BackButton from "../../components/BackButton";
 
 const AdminProduct = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,9 +68,12 @@ const AdminProduct = () => {
         "Tên sản phẩm": product.name,
         "Màu sắc": variant.color,
         "Dung lượng": variant.storage,
-        Giá: variant.price
+        "Giá nhập kho": variant.importPrice
+          ? variant.importPrice.toLocaleString("vi-VN") + "₫"
+          : "Chưa có",
+        "Giá bán": variant.price
           ? variant.price.toLocaleString("vi-VN") + "₫"
-          : "Chưa có giá",
+          : "Chưa có",
         "Tồn kho": variant.stock,
         "Đã bán": variant.sold || 0,
         "Thương hiệu": product.brand,
@@ -137,6 +140,7 @@ const AdminProduct = () => {
           <thead className="bg-gray-100 text-sm font-semibold text-gray-700">
             <tr>
               <th className="p-3 border">Tên sản phẩm</th>
+              <th className="p-3 border">Giá nhập kho</th>
               <th className="p-3 border">Giá</th>
               <th className="p-3 border">Tồn kho</th>
               <th className="p-3 border">Đã bán</th>
@@ -150,6 +154,14 @@ const AdminProduct = () => {
             {products.map((product) => (
               <tr key={product._id} className="border-t hover:bg-gray-50">
                 <td className="p-3 border">{product.name}</td>
+                <td className="p-3 border">
+                  {product.variants?.length > 0
+                    ? Math.min(
+                        ...product.variants.map((v) => v.importPrice || 0)
+                      ).toLocaleString("vi-VN") + "₫"
+                    : "Chưa có"}
+                </td>
+
                 <td className="p-3 border">
                   {product.variants?.length > 0
                     ? Math.min(
@@ -178,11 +190,16 @@ const AdminProduct = () => {
                 </td>
 
                 <td className="p-3 border">
-                  {new Date(product.createdAt).toLocaleString("vi-VN")}
+                  {product.createdAt
+                    ? new Date(product.createdAt).toLocaleString("vi-VN")
+                    : "Chưa có"}
                 </td>
                 <td className="p-3 border">
-                  {new Date(product.updatedAt).toLocaleString("vi-VN")}
+                  {product.updatedAt
+                    ? new Date(product.updatedAt).toLocaleString("vi-VN")
+                    : "Chưa có"}
                 </td>
+
                 <td className="p-3 border">
                   <div className="flex justify-center gap-2">
                     <Link

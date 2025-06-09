@@ -3,13 +3,16 @@ const slugify = require("slugify");
 
 class ProductService {
   async createProduct(productData, uploadedImages) {
-    const { name, description, brand, category, specifications, variants } = productData;
+    const { name, description, brand, category, specifications, variants } =
+      productData;
 
-    // Parse if string (when sent from form-data)
-    const parsedSpecs = typeof specifications === "string" ? JSON.parse(specifications) : specifications;
-    const parsedVariants = typeof variants === "string" ? JSON.parse(variants) : variants;
+    const parsedSpecs =
+      typeof specifications === "string"
+        ? JSON.parse(specifications)
+        : specifications;
+    const parsedVariants =
+      typeof variants === "string" ? JSON.parse(variants) : variants;
 
-    // Validate required fields
     const requiredFields = ["name", "description", "brand", "category"];
     for (let field of requiredFields) {
       if (!productData[field]) {
@@ -17,31 +20,26 @@ class ProductService {
       }
     }
 
-    // Handle image paths
-    let imagePaths = uploadedImages.map(file => `/uploads/products/${file.filename}`);
+    let imagePaths = uploadedImages.map(
+      (file) => `/uploads/products/${file.filename}`
+    );
 
-    // Assign images to variants
     if (Array.isArray(parsedVariants)) {
-      parsedVariants.forEach(variant => {
+      parsedVariants.forEach((variant) => {
         const numImages = variant.images?.length || 0;
         const assignedImages = imagePaths.splice(0, numImages);
         variant.images = assignedImages;
+
+        if (variant.importPrice !== undefined) {
+          variant.importPrice = Number(variant.importPrice);
+        }
       });
     }
 
-    // Generate unique slug
-    let baseSlug = slugify(name, { lower: true });
-    let slug = baseSlug;
-    let count = 1;
-
-    while (await Product.findOne({ slug })) {
-      slug = `${baseSlug}-${count}`;
-      count++;
-    }
+    // Bỏ phần tạo slug thủ công vì schema đã có pre('save')
 
     const product = new Product({
       name,
-      slug,
       description,
       brand,
       category,
@@ -66,13 +64,13 @@ class ProductService {
       filter.name = { $regex: search, $options: "i" };
     }
     if (minPrice || maxPrice) {
-      filter.finalPrice = {};
-      if (minPrice) filter.finalPrice.$gte = Number(minPrice);
-      if (maxPrice) filter.finalPrice.$lte = Number(maxPrice);
+      filter["variants.price"] = {};
+      if (minPrice) filter["variants.price"].$gte = Number(minPrice);
+      if (maxPrice) filter["variants.price"].$lte = Number(maxPrice);
     }
 
     const products = await Product.find(filter)
-      .select("name price finalPrice category brand images variants")
+      .select("name brand category variants specifications createdAt updatedAt")
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
@@ -96,13 +94,13 @@ class ProductService {
     const product = await Product.findById(id);
     if (!product) throw new Error("Product not found");
 
-    let { name, description, brand, category, specifications, variants } = productData;
+    let { name, description, brand, category, specifications, variants } =
+      productData;
 
-    // Parse if string
     if (typeof specifications === "string") {
       try {
         specifications = JSON.parse(specifications);
-      } catch (err) {
+      } catch {
         throw new Error("Invalid specifications format");
       }
     }
@@ -110,28 +108,43 @@ class ProductService {
     if (typeof variants === "string") {
       try {
         variants = JSON.parse(variants);
-      } catch (err) {
+      } catch {
         throw new Error("Invalid variants format");
       }
     }
 
-    // Update basic info
     if (name) product.name = name;
     if (description) product.description = description;
     if (brand) product.brand = brand;
     if (category) product.category = category;
     if (specifications) product.specifications = specifications;
 
-    // Handle variant images
     if (variants && Array.isArray(variants)) {
-      let imagePaths = uploadedImages.map(file => `/uploads/products/${file.filename}`);
+      let uploadedImagesCopy = [...uploadedImages]; // copy tránh mutate mảng gốc
 
-      variants = variants.map(variant => {
-        const numImages = variant.images?.length || 0;
-        const assignedImages = imagePaths.splice(0, numImages);
+      variants = variants.map((variant) => {
+        let newImages = [];
+
+        if (variant.images && variant.images.length > 0) {
+          if (typeof variant.images[0] === "string") {
+            // ảnh cũ
+            newImages = variant.images;
+          } else {
+            // ảnh mới upload
+            const numImages = variant.images.length;
+            newImages = uploadedImagesCopy
+              .splice(0, numImages)
+              .map((file) => `/uploads/products/${file.filename}`);
+          }
+        }
+
         return {
           ...variant,
-          images: assignedImages,
+          images: newImages,
+          importPrice:
+            variant.importPrice !== undefined
+              ? Number(variant.importPrice)
+              : variant.importPrice,
         };
       });
 
@@ -153,8 +166,8 @@ class ProductService {
     if (!product) throw new Error("Product not found");
 
     product.ratings.push({ userId, rating, comment });
-    await product.calculateAverageRating();
-    return product;
+
+    return await product.save();
   }
 
   async searchProducts(query) {
@@ -162,16 +175,16 @@ class ProductService {
       name: { $regex: query, $options: "i" },
     }).select("name variants");
 
-    return products.map(p => {
+    return products.map((p) => {
       const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
       return {
         _id: p._id,
         name: `${p.name} ${firstVariant.storage || ""} - Chính hãng VN/A`,
-        price: firstVariant.price || p.price || 0,
-        image: firstVariant.images?.[0] || p.images?.[0] || "",
+        price: firstVariant.price || 0,
+        image: firstVariant.images?.[0] || "",
       };
     });
   }
 }
 
-module.exports = new ProductService(); 
+module.exports = new ProductService();

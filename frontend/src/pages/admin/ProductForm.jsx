@@ -15,13 +15,28 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
       os: "",
     },
     variants: initialValues.variants || [
-      { color: "", storage: "", price: "", stock: "", images: [] },
+      {
+        color: "",
+        storage: "",
+        price: "",
+        importPrice: "",
+        stock: "",
+        images: [],
+      },
     ],
   });
 
   useEffect(() => {
     if (isEdit) {
-      setForm(initialValues);
+      setForm({
+        ...initialValues,
+        variants:
+          initialValues.variants?.map((v) => ({
+            ...v,
+            images: v.images || [],
+            importPrice: v.importPrice || "",
+          })) || [],
+      });
     }
   }, [isEdit, initialValues]);
 
@@ -56,7 +71,14 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
       ...form,
       variants: [
         ...form.variants,
-        { color: "", storage: "", price: "", stock: "", images: [] },
+        {
+          color: "",
+          storage: "",
+          price: "",
+          importPrice: "",
+          stock: "",
+          images: [],
+        },
       ],
     });
   };
@@ -82,21 +104,23 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
 
     formData.append("specifications", JSON.stringify(form.specifications));
 
-    // ✅ Gửi variants dạng JSON
     const variantsToSend = form.variants.map((v) => ({
       color: v.color,
       storage: v.storage,
       price: v.price,
+      importPrice: v.importPrice,
       stock: v.stock,
-      images: v.images.map((img) => img.name), // Lưu tên ảnh khi backend yêu cầu
+      images: v.images.map((img) => (typeof img === "string" ? img : img.name)),
     }));
     formData.append("variants", JSON.stringify(variantsToSend));
 
-    // ✅ Gửi toàn bộ ảnh trong field "files"
     form.variants.forEach((variant) => {
       if (Array.isArray(variant.images)) {
         variant.images.forEach((file) => {
-          formData.append("files", file); // Chuyển file trực tiếp, không phải tên file
+          if (typeof file !== "string") {
+            // Chỉ append nếu là File
+            formData.append("files", file);
+          }
         });
       }
     });
@@ -138,18 +162,26 @@ const ProductForm = ({ initialValues = {}, onSubmit, isEdit }) => {
             key={index}
             className="border p-4 rounded-md bg-gray-50 relative space-y-2"
           >
-            {["color", "storage", "price", "stock"].map((field) => (
-              <input
-                key={field}
-                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                value={variant[field] || ""}
-                onChange={(e) =>
-                  handleVariantChange(index, field, e.target.value)
-                }
-                className="w-full border p-2 rounded"
-                required
-              />
-            ))}
+            {["color", "storage", "price", "importPrice", "stock"].map(
+              (field) => (
+                <input
+                  key={field}
+                  placeholder={
+                    field === "importPrice"
+                      ? "Giá nhập kho"
+                      : field.charAt(0).toUpperCase() + field.slice(1)
+                  }
+                  value={variant[field] || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, field, e.target.value)
+                  }
+                  className="w-full border p-2 rounded"
+                  required={["color", "storage", "price", "stock"].includes(
+                    field
+                  )}
+                />
+              )
+            )}
             <input
               type="file"
               multiple

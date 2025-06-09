@@ -4,8 +4,9 @@ const Coupon = require("../models/Coupon");
 
 class OrderService {
   async createOrder(orderData, userId) {
-    const { orderItems,
-      shippingAddress, 
+    const {
+      orderItems,
+      shippingAddress,
       paymentMethod,
       totalPrice,
       discountAmount = 0,
@@ -27,7 +28,9 @@ class OrderService {
         throw new Error("Mã giảm giá đã hết hạn");
       }
       if (totalPrice < coupon.minOrderValue) {
-        throw new Error(`Đơn hàng phải từ ${coupon.minOrderValue}₫ để dùng mã này`);
+        throw new Error(
+          `Đơn hàng phải từ ${coupon.minOrderValue}₫ để dùng mã này`
+        );
       }
     }
 
@@ -94,14 +97,14 @@ class OrderService {
       const product = await Product.findById(item.product);
       if (!product) continue;
       const variant = product.variants.find(
-        v => v.color === item.color && v.storage === item.storage
+        (v) => v.color === item.color && v.storage === item.storage
       );
       if (variant) {
         variant.stock = Math.max(0, variant.stock - item.quantity);
         variant.sold = (variant.sold || 0) + item.quantity;
 
         product.markModified("variants");
-        
+
         product.sold = product.variants.reduce(
           (total, v) => total + (v.sold || 0),
           0
@@ -138,4 +141,4 @@ class OrderService {
   }
 }
 
-module.exports = new OrderService(); 
+module.exports = new OrderService();

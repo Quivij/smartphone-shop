@@ -19,7 +19,8 @@ const productSchema = new mongoose.Schema(
       {
         color: { type: String, required: true },
         storage: { type: String, required: true },
-        price: { type: Number, required: true, min: 0 },
+        price: { type: Number, required: true, min: 0 }, // Giá bán
+        importPrice: { type: Number, required: true, min: 0 }, // ✅ Giá nhập
         images: [{ type: String, required: true }],
         stock: { type: Number, default: 0, min: 0 },
         sold: { type: Number, default: 0, min: 0 },
