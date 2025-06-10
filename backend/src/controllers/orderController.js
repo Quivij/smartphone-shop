@@ -4,7 +4,7 @@ const Product = require("../models/Product");
 // [POST] /api/orders - Tạo đơn hàng mới
 const createOrder = async (req, res) => {
   try {
-    const userId =  req.user.id;
+    const userId = req.user.id;
     const orderData = req.body;
     const savedOrder = await orderService.createOrder(orderData, userId);
     res.status(201).json(savedOrder);
@@ -98,7 +98,10 @@ const getOrderById = async (req, res) => {
 const markAsDelivered = async (req, res) => {
   try {
     const updatedorder = await orderService.markAsDelivered(req.params.id);
-    res.json({ message: "Đã cập nhật trạng thái giao hàng", order: updatedorder });
+    res.json({
+      message: "Đã cập nhật trạng thái giao hàng",
+      order: updatedorder,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

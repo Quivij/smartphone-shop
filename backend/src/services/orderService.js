@@ -1,3 +1,4 @@
+const mongoose = require("mongoose"); // <-- THÊM DÒNG NÀY
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Coupon = require("../models/Coupon");
@@ -84,35 +85,47 @@ class OrderService {
 
   async markAsDelivered(orderId) {
     const order = await Order.findById(orderId);
-    if (!order) throw new Error("Không tìm thấy đơn hàng");
-    if (order.isDelivered) {
-      throw new Error("Đơn hàng đã được giao");
+
+    if (!order) {
+      throw new Error("Không tìm thấy đơn hàng");
     }
-    //đánh dấu đơn hàng là đã giao
+    if (order.isDelivered) {
+      throw new Error("Đơn hàng đã được giao trước đó");
+    }
+
+    const productUpdatePromises = [];
+
+    for (const item of order.orderItems) {
+      if (!mongoose.Types.ObjectId.isValid(item.product)) {
+        console.warn(
+          `ID sản phẩm không hợp lệ trong đơn hàng ${orderId}: ${item.product}`
+        );
+        continue;
+      }
+
+      const updatePromise = Product.updateOne(
+        {
+          _id: item.product,
+          "variants.color": item.color,
+          "variants.storage": item.storage,
+        },
+        {
+          $inc: {
+            "variants.$.stock": -item.quantity,
+            "variants.$.sold": item.quantity,
+            sold: item.quantity,
+          },
+        }
+      );
+      productUpdatePromises.push(updatePromise);
+    }
+
+    await Promise.all(productUpdatePromises);
+
     order.isDelivered = true;
     order.deliveredAt = new Date();
     order.status = "Delivered";
 
-    for (const item of order.orderItems) {
-      const product = await Product.findById(item.product);
-      if (!product) continue;
-      const variant = product.variants.find(
-        (v) => v.color === item.color && v.storage === item.storage
-      );
-      if (variant) {
-        variant.stock = Math.max(0, variant.stock - item.quantity);
-        variant.sold = (variant.sold || 0) + item.quantity;
-
-        product.markModified("variants");
-
-        product.sold = product.variants.reduce(
-          (total, v) => total + (v.sold || 0),
-          0
-        );
-        product.markModified("sold");
-        await product.save();
-      }
-    }
     return await order.save();
   }
 

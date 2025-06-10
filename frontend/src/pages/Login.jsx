@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { InputField } from "../components/InputField";
 import { Button } from "../components/Button";
-import { useLogin } from "../hooks/useLogin"; // Hook cho đăng nhập thường
-import { useGoogleLoginMutation } from "../hooks/useGoogleLoginMutation"; // Hook mới cho Google
+import { useLogin } from "../hooks/useLogin";
+import { useGoogleLoginMutation } from "../hooks/useGoogleLoginMutation";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
-import { useGoogleLogin as useGoogleOAuthLogin } from "@react-oauth/google"; // Đổi tên để tránh nhầm lẫn
+import { useGoogleLogin as useGoogleOAuthLogin } from "@react-oauth/google";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,13 +16,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // 1. SỬ DỤNG CÁC HOOK MỚI
-  // Hook cho đăng nhập bằng email/password
-  const { mutate: login, isLoading, isError, error } = useLogin();
-  // Hook cho đăng nhập bằng Google
+  const { mutate: login, isLoading } = useLogin();
   const { mutate: loginWithGoogle } = useGoogleLoginMutation();
 
-  // Điền sẵn email nếu được redirect từ lỗi Google Login
   useEffect(() => {
     if (location.state?.emailFromGoogle) {
       setEmail(location.state.emailFromGoogle);
@@ -30,29 +26,24 @@ const Login = () => {
     }
   }, [location.state]);
 
-  // 2. ĐƠN GIẢN HÓA HÀM ONSUBMIT
   const onSubmit = (e) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Vui lòng nhập đầy đủ email và mật khẩu.");
       return;
     }
-    // Chỉ cần gọi hàm mutate. Mọi logic xử lý đã nằm trong hook.
     login(
       { email, password },
       {
         onSuccess: () => {
-          // Điều hướng là một side-effect của component, xử lý ở đây là hợp lý
           navigate("/");
         },
       }
     );
   };
 
-  // 3. ĐƠN GIẢN HÓA GOOGLE LOGIN
   const handleGoogleLogin = useGoogleOAuthLogin({
     onSuccess: (response) => {
-      // Chỉ cần gọi mutate với token. Mọi logic đã nằm trong hook `useGoogleLoginMutation`
       loginWithGoogle(response.access_token, {
         onSuccess: () => {
           navigate("/");
@@ -61,7 +52,6 @@ const Login = () => {
           const message = error.response?.data?.message || "";
           const emailFromGoogle = error.response?.data?.email;
           if (message.includes("Tài khoản đã tồn tại")) {
-            // Chờ toast hiển thị rồi mới navigate
             setTimeout(() => {
               navigate("/login", { state: { emailFromGoogle } });
             }, 500);
@@ -84,12 +74,7 @@ const Login = () => {
         </h2>
 
         <form onSubmit={onSubmit} className="mt-6">
-          {/* Hiển thị lỗi từ hook React Query */}
-          {isError && (
-            <p className="text-red-500 text-sm mb-2 text-center">
-              {error.response?.data?.message}
-            </p>
-          )}
+          {/* --- ĐÃ XÓA THÔNG BÁO LỖI TRONG FORM --- */}
 
           <InputField
             label="Email"
@@ -108,8 +93,8 @@ const Login = () => {
             required
           />
 
-          {/* Sử dụng isLoading từ hook */}
           <Button
+            type="submit" // <-- THÊM THUỘC TÍNH TYPE="SUBMIT"
             disabled={isLoading}
             text={isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
           />
