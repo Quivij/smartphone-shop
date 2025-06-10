@@ -1,90 +1,94 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { InputField } from "../components/InputField";
 import { Button } from "../components/Button";
-import { useLogin } from "../hooks/useLogin";
+import { useLogin } from "../hooks/useLogin"; // Hook cho đăng nhập thường
+import { useGoogleLoginMutation } from "../hooks/useGoogleLoginMutation"; // Hook mới cho Google
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
-import { useGoogleLogin } from "@react-oauth/google";
-import api from "../api/api";
-import { useUserStore } from "../store/useUserStore";
+import { useGoogleLogin as useGoogleOAuthLogin } from "@react-oauth/google"; // Đổi tên để tránh nhầm lẫn
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { loading, error, successMessage, handleLogin } = useLogin();
-  const { setUser } = useUserStore();
 
-  const onSubmit = async (e) => {
+  // 1. SỬ DỤNG CÁC HOOK MỚI
+  // Hook cho đăng nhập bằng email/password
+  const { mutate: login, isLoading, isError, error } = useLogin();
+  // Hook cho đăng nhập bằng Google
+  const { mutate: loginWithGoogle } = useGoogleLoginMutation();
+
+  // Điền sẵn email nếu được redirect từ lỗi Google Login
+  useEffect(() => {
+    if (location.state?.emailFromGoogle) {
+      setEmail(location.state.emailFromGoogle);
+      toast.info("Vui lòng nhập mật khẩu của bạn để tiếp tục.");
+    }
+  }, [location.state]);
+
+  // 2. ĐƠN GIẢN HÓA HÀM ONSUBMIT
+  const onSubmit = (e) => {
     e.preventDefault();
-
     if (!email || !password) {
       toast.error("Vui lòng nhập đầy đủ email và mật khẩu.");
       return;
     }
-
-    const success = await handleLogin({ email, password });
-
-    if (success) {
-      toast.success(successMessage || "Đăng nhập thành công!");
-      navigate("/");
-    } else {
-      toast.error(error || "Đăng nhập thất bại");
-    }
+    // Chỉ cần gọi hàm mutate. Mọi logic xử lý đã nằm trong hook.
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          // Điều hướng là một side-effect của component, xử lý ở đây là hợp lý
+          navigate("/");
+        },
+      }
+    );
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (response) => {
-      try {
-        const result = await api.post("/auth/google", {
-          token: response.access_token,
-        });
-
-        localStorage.setItem("token", result.data.accessToken);
-        setUser(result.data.user);
-        toast.success("Đăng nhập Google thành công!");
-        navigate("/");
-      } catch (error) {
-        const message =
-          error.response?.data?.message || "Đăng nhập Google thất bại";
-        const emailFromGoogle = error.response?.data?.email;
-
-        toast.error(message);
-
-        // Chờ toast hiển thị xong trước khi redirect
-        setTimeout(() => {
+  // 3. ĐƠN GIẢN HÓA GOOGLE LOGIN
+  const handleGoogleLogin = useGoogleOAuthLogin({
+    onSuccess: (response) => {
+      // Chỉ cần gọi mutate với token. Mọi logic đã nằm trong hook `useGoogleLoginMutation`
+      loginWithGoogle(response.access_token, {
+        onSuccess: () => {
+          navigate("/");
+        },
+        onError: (error) => {
+          const message = error.response?.data?.message || "";
+          const emailFromGoogle = error.response?.data?.email;
           if (message.includes("Tài khoản đã tồn tại")) {
-            navigate("/login", {
-              state: { emailFromGoogle },
-            });
+            // Chờ toast hiển thị rồi mới navigate
+            setTimeout(() => {
+              navigate("/login", { state: { emailFromGoogle } });
+            }, 500);
           }
-        }, 300);
-      }
+        },
+      });
     },
     onError: (error) => {
-      console.error("Google login error:", error);
+      console.error("Google OAuth Error:", error);
       toast.error("Đăng nhập Google thất bại");
     },
     flow: "implicit",
   });
 
-  // const handleFacebookLogin = () => {
-  //   window.location.href = `http://localhost:3001/auth/facebook`;
-  // };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center text-gray-700">
           Đăng Nhập
         </h2>
 
         <form onSubmit={onSubmit} className="mt-6">
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          {successMessage && (
-            <p className="text-green-500 text-sm mt-2">{successMessage}</p>
+          {/* Hiển thị lỗi từ hook React Query */}
+          {isError && (
+            <p className="text-red-500 text-sm mb-2 text-center">
+              {error.response?.data?.message}
+            </p>
           )}
 
           <InputField
@@ -104,32 +108,33 @@ const Login = () => {
             required
           />
 
-          <Button text={loading ? "Đang đăng nhập..." : "Đăng Nhập"} />
+          {/* Sử dụng isLoading từ hook */}
+          <Button
+            disabled={isLoading}
+            text={isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
+          />
         </form>
 
-        {/* OAuth Buttons */}
         <div className="mt-6 flex flex-col gap-3">
           <button
-            onClick={() => handleGoogleLogin()}
-            className="flex items-center justify-center gap-2 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 transition"
+            onClick={handleGoogleLogin}
+            className="flex items-center justify-center gap-2 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 transition w-full"
           >
             <FcGoogle size={20} />
             Đăng nhập với Google
           </button>
-
           <button
-            onClick={handleGoogleLogin}
-            // onClick={handleFacebookLogin}
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            // onClick={handleFacebookLogin} // Sẽ cần logic tương tự cho Facebook
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition w-full"
           >
             <FaFacebookF size={18} />
             Đăng nhập với Facebook
           </button>
         </div>
 
-        <p className="mt-4 text-center text-gray-600">
+        <p className="mt-4 text-center text-sm text-gray-600">
           Chưa có tài khoản?{" "}
-          <Link to="/register" className="text-blue-500">
+          <Link to="/register" className="text-blue-500 hover:underline">
             Đăng ký ngay
           </Link>
         </p>

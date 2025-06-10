@@ -100,6 +100,7 @@ const loginUser = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
+      path: "/", // Thêm path để đảm bảo cookie được gửi đúng
     });
 
     // Trả về thông tin người dùng cùng với avatar
@@ -109,14 +110,21 @@ const loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar || "/default-avatar.png", // trả về avatar nếu có
+        avatar: user.avatar, // Giờ đây frontend sẽ tự xử lý URL
         isAdmin: user.isAdmin,
       },
       accessToken,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    // Bắt lỗi từ service và gửi về cho client
+    if (error.message === "Email hoặc mật khẩu không chính xác.") {
+      // Gửi status 401 (Unauthorized) và thông báo lỗi cụ thể
+      return res.status(401).json({ message: error.message });
+    }
+
+    // Đối với các lỗi không mong muốn khác, trả về lỗi 500
+    console.error("Lỗi đăng nhập không xác định:", error);
+    res.status(500).json({ message: "Đã có lỗi xảy ra, vui lòng thử lại." });
   }
 };
 ////////////////////////LẤY THÔNG TIN NGƯỜI DÙNG
@@ -382,6 +390,51 @@ const loginWithFacebook = async (req, res) => {
     res.status(401).json({ message: "Xác thực Facebook thất bại" });
   }
 };
+// Thêm controller này vào file của bạn
+
+const changePassword = async (req, res) => {
+  try {
+    // 1. Lấy thông tin từ request
+    const userId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // 2. Kiểm tra dữ liệu đầu vào
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "Vui lòng nhập đầy đủ thông tin." });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Mật khẩu mới không khớp." });
+    }
+
+    // 3. Tìm người dùng trong DB
+    // Quan trọng: không dùng .select('-password') vì chúng ta cần mật khẩu để so sánh
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
+    }
+
+    // 4. So sánh mật khẩu hiện tại
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Mật khẩu hiện tại không chính xác." });
+    }
+
+    // 5. Hash mật khẩu mới và cập nhật
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({ message: "Đổi mật khẩu thành công!" });
+  } catch (error) {
+    console.error("Lỗi đổi mật khẩu:", error);
+    res.status(500).json({ message: "Lỗi server khi đổi mật khẩu." });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -398,4 +451,5 @@ module.exports = {
   getAllUsersRaw,
   loginWithGoogle,
   loginWithFacebook,
+  changePassword,
 };

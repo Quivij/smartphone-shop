@@ -2,97 +2,249 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 
+// --- Helper Functions ---
+
+/**
+ * Lấy số tuần ISO trong năm.
+ * @param {Date} date - Ngày cần kiểm tra.
+ * @returns {number} - Số tuần.
+ */
+function getWeekNumber(date) {
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+/**
+ * Định dạng dữ liệu biểu đồ, lấp đầy các khoảng trống không có dữ liệu bằng giá trị 0.
+ * @param {Array} statsData - Dữ liệu thô từ MongoDB aggregate.
+ * @param {number} intervals - Số lượng khoảng thời gian (7 ngày, 6 tuần, 6 tháng).
+ * @param {'day' | 'week' | 'month'} view - Chế độ xem.
+ * @param {string} dataKey - Tên key của dữ liệu (ví dụ: 'doanhThu' hoặc 'soLuong').
+ * @returns {Array} - Mảng dữ liệu đã được định dạng cho biểu đồ.
+ */
+function formatChartData(statsData, intervals, view, dataKeys) {
+  const chartData = [];
+  const now = new Date();
+
+  for (let i = intervals - 1; i >= 0; i--) {
+    const date = new Date();
+    let name = "";
+    let matchCondition = (item) => false;
+
+    if (view === "day") {
+      date.setDate(now.getDate() - i);
+      name = `${date.getDate()}/${date.getMonth() + 1}`;
+      matchCondition = (item) =>
+        item._id.day === date.getDate() &&
+        item._id.month === date.getMonth() + 1 &&
+        item._id.year === date.getFullYear();
+    } else if (view === "week") {
+      date.setDate(now.getDate() - i * 7);
+      const week = getWeekNumber(date);
+      const year = date.getFullYear();
+      name = `Tuần ${week}`;
+      matchCondition = (item) =>
+        item._id.week === week && item._id.year === year;
+    } else {
+      // month
+      date.setMonth(now.getMonth() - i);
+      name = `Tháng ${date.getMonth() + 1}`;
+      matchCondition = (item) =>
+        item._id.month === date.getMonth() + 1 &&
+        item._id.year === date.getFullYear();
+    }
+
+    const found = statsData.find(matchCondition);
+    const dataPoint = { name };
+
+    dataKeys.forEach((key) => {
+      dataPoint[key.keyInChart] = found ? found[key.keyInDb] : 0;
+    });
+
+    chartData.push(dataPoint);
+  }
+  return chartData;
+}
+
+// --- Main Controller ---
+
 export const getDashboardStats = async (req, res) => {
   try {
-    // Tổng số liệu
-    const totalUsers = await User.countDocuments();
-    const totalOrders = await Order.countDocuments();
+    const now = new Date();
 
-    // Tổng doanh thu chưa trừ giảm giá
-    const totalRevenueAgg = await Order.aggregate([
-      { $match: { status: { $ne: "cancelled" } } },
-      { $group: { _id: null, total: { $sum: "$totalPrice" } } },
-    ]);
-    const totalRevenue = totalRevenueAgg[0]?.total || 0;
+    // 1. TÍNH TOÁN CÁC SỐ LIỆU TỔNG QUAN
+    const [totalUsers, totalOrders, totalProducts, revenueAgg, discountAgg] =
+      await Promise.all([
+        User.countDocuments(),
+        Order.countDocuments(),
+        Product.countDocuments(),
+        Order.aggregate([
+          { $match: { status: { $ne: "cancelled" } } },
+          { $group: { _id: null, total: { $sum: "$totalPrice" } } },
+        ]),
+        Order.aggregate([
+          { $match: { status: { $ne: "cancelled" } } },
+          { $group: { _id: null, totalDiscount: { $sum: "$discountAmount" } } },
+        ]),
+      ]);
 
-    // Tổng giảm giá
-    const totalDiscountAgg = await Order.aggregate([
-      { $match: { status: { $ne: "cancelled" } } },
-      { $group: { _id: null, totalDiscount: { $sum: "$discountAmount" } } },
-    ]);
-    const totalDiscount = totalDiscountAgg[0]?.totalDiscount || 0;
+    const totalRevenue = revenueAgg[0]?.total || 0;
+    const totalDiscount = discountAgg[0]?.totalDiscount || 0;
 
-    const totalProducts = await Product.countDocuments();
+    // 2. CHUẨN BỊ CHO VIỆC LẤY DỮ LIỆU BIỂU ĐỒ
+    // Xác định khoảng thời gian
+    const last7Days = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 6
+    );
+    const last6Weeks = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 41
+    );
+    const last6Months = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
-    // Doanh thu và giảm giá theo tháng (6 tháng gần nhất)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5); // 5 tháng trước + tháng hiện tại = 6 tháng
+    // Xác định cách nhóm dữ liệu (grouping)
+    const dayGroupId = {
+      day: { $dayOfMonth: "$createdAt" },
+      month: { $month: "$createdAt" },
+      year: { $year: "$createdAt" },
+    };
+    const weekGroupId = {
+      week: { $isoWeek: "$createdAt" },
+      year: { $isoWeekYear: "$createdAt" },
+    };
+    const monthGroupId = {
+      month: { $month: "$createdAt" },
+      year: { $year: "$createdAt" },
+    };
 
-    const revenueByMonth = await Order.aggregate([
+    // 3. TẠO CÁC PIPELINE AGGREGATE
+    const createRevenuePipeline = (startDate, groupId) => [
       {
         $match: {
-          createdAt: { $gte: sixMonthsAgo },
+          createdAt: { $gte: startDate },
           status: { $ne: "cancelled" },
         },
       },
       {
         $group: {
-          _id: {
-            month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" },
-          },
+          _id: groupId,
           totalRevenue: { $sum: "$totalPrice" },
           totalDiscount: { $sum: "$discountAmount" },
         },
       },
-      {
-        $sort: { "_id.year": 1, "_id.month": 1 },
-      },
-    ]);
-
-    const monthsMap = [
-      "",
-      "Tháng 1",
-      "Tháng 2",
-      "Tháng 3",
-      "Tháng 4",
-      "Tháng 5",
-      "Tháng 6",
-      "Tháng 7",
-      "Tháng 8",
-      "Tháng 9",
-      "Tháng 10",
-      "Tháng 11",
-      "Tháng 12",
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.week": 1, "_id.day": 1 } },
     ];
 
-    // Đảm bảo đủ 6 tháng liên tiếp (có thể có tháng không có doanh thu => fill 0)
-    const now = new Date();
-    const chartData = [];
+    const createProductPipeline = (startDate, groupId) => [
+      // Lưu ý: Đổi "cancelled" thành "Cancelled" để khớp với Enum của bạn
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          status: { $ne: "Cancelled" },
+        },
+      },
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
+      // === DÒNG ĐÃ SỬA ===
+      // Đổi từ "$items" thành "$orderItems"
+      { $unwind: "$orderItems" },
 
-      const found = revenueByMonth.find(
-        (item) => item._id.month === month && item._id.year === year
-      );
+      {
+        $group: {
+          _id: groupId,
+          // === DÒNG ĐÃ SỬA ===
+          // Đổi từ "$items.quantity" thành "$orderItems.quantity"
+          totalQuantity: { $sum: "$orderItems.quantity" },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.week": 1, "_id.day": 1 } },
+    ];
 
-      chartData.push({
-        name: monthsMap[month],
-        doanhThu: found ? found.totalRevenue : 0,
-        discount: found ? found.totalDiscount : 0,
-      });
-    }
+    // 4. THỰC THI TẤT CẢ PIPELINE SONG SONG
+    const [
+      revenueByDay,
+      revenueByWeek,
+      revenueByMonth,
+      productsByDay,
+      productsByWeek,
+      productsByMonth,
+    ] = await Promise.all([
+      Order.aggregate(createRevenuePipeline(last7Days, dayGroupId)),
+      Order.aggregate(createRevenuePipeline(last6Weeks, weekGroupId)),
+      Order.aggregate(createRevenuePipeline(last6Months, monthGroupId)),
+      Order.aggregate(createProductPipeline(last7Days, dayGroupId)),
+      Order.aggregate(createProductPipeline(last6Weeks, weekGroupId)),
+      Order.aggregate(createProductPipeline(last6Months, monthGroupId)),
+    ]);
 
+    // 5. ĐỊNH DẠNG DỮ LIỆU TRẢ VỀ CHO BIỂU ĐỒ
+    const revenueKeys = [
+      { keyInDb: "totalRevenue", keyInChart: "doanhThu" },
+      { keyInDb: "totalDiscount", keyInChart: "discount" },
+    ];
+    const productKeys = [{ keyInDb: "totalQuantity", keyInChart: "soLuong" }];
+
+    const formattedRevenueByDay = formatChartData(
+      revenueByDay,
+      7,
+      "day",
+      revenueKeys
+    );
+    const formattedRevenueByWeek = formatChartData(
+      revenueByWeek,
+      6,
+      "week",
+      revenueKeys
+    );
+    const formattedRevenueByMonth = formatChartData(
+      revenueByMonth,
+      6,
+      "month",
+      revenueKeys
+    );
+    const formattedProductsByDay = formatChartData(
+      productsByDay,
+      7,
+      "day",
+      productKeys
+    );
+    const formattedProductsByWeek = formatChartData(
+      productsByWeek,
+      6,
+      "week",
+      productKeys
+    );
+    const formattedProductsByMonth = formatChartData(
+      productsByMonth,
+      6,
+      "month",
+      productKeys
+    );
+
+    // 6. TRẢ VỀ KẾT QUẢ CUỐI CÙNG
     res.json({
+      // Dữ liệu tổng quan
       totalUsers,
       totalOrders,
       totalRevenue,
       totalDiscount,
       totalProducts,
-      chartData,
+      // Dữ liệu cho tất cả các biểu đồ
+      chartData: {
+        byDay: formattedRevenueByDay,
+        byWeek: formattedRevenueByWeek,
+        byMonth: formattedRevenueByMonth,
+        productsByDay: formattedProductsByDay,
+        productsByWeek: formattedProductsByWeek,
+        productsByMonth: formattedProductsByMonth,
+      },
     });
   } catch (err) {
     console.error("Dashboard Error:", err);

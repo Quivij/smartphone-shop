@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser"); // 1. IMPORT COOKIE-PARSER
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/UserRoutes");
 const { errorHandler } = require("./middleware/errorMiddleware");
@@ -10,7 +11,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const dashboardRoute = require("./routes/dashboardRoute");
 const couponRoutes = require("./routes/couponRoutes");
 const session = require("express-session");
-const cartRoutes = require('./routes/cartRoutes');
+const cartRoutes = require("./routes/cartRoutes");
 const authRoutes = require("./routes/authRoutes");
 const path = require("path");
 
@@ -42,17 +43,19 @@ app.use(
 );
 
 app.use(express.json()); // Xử lý dữ liệu JSON từ request
+app.use(cookieParser()); // 2. SỬ DỤNG MIDDLEWARE COOKIE-PARSER TẠI ĐÂY
 app.use(morgan("dev")); // Ghi log request
 
 // Định nghĩa các routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
-app.use('/api/cart', cartRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/coupons", couponRoutes);
 app.use("/api/auth", authRoutes);
+
 // Middleware xử lý lỗi
 app.use(errorHandler);
 

@@ -67,23 +67,22 @@ const registerUserService = async (name, email, password, confirmPassword) => {
 };
 
 const loginUserService = async (email, password) => {
-  // Kiểm tra xem email có tồn tại không
-  const user = await User.findOne({ email: email });
+  // 1. Kiểm tra xem email có tồn tại không
+  const user = await User.findOne({ email }); // Viết gọn hơn
   if (!user) {
-    throw new Error("Email, mât khẩu không hợp lệ");
-  }
-  // Kiểm tra mật khẩu có đúng không
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Mật khẩu không đúng");
-  } else {
-    // Tạo token cho người dùng
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-    user.accessToken = accessToken;
-    user.refreshToken = refreshToken;
+    // Lỗi cụ thể khi không tìm thấy email
+    throw new Error("Email hoặc mật khẩu không chính xác.");
   }
 
+  // 2. Kiểm tra mật khẩu có đúng không
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    // Lỗi cụ thể khi sai mật khẩu
+    throw new Error("Email hoặc mật khẩu không chính xác.");
+  }
+
+  // 3. Nếu mọi thứ đều đúng, chỉ cần trả về user
+  // Việc tạo token sẽ do controller đảm nhiệm
   return user;
 };
 

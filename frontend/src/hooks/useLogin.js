@@ -1,58 +1,53 @@
-import { useState } from "react";
-import { loginUser } from "../api/auth";
-import { useUserStore } from "../store/useUserStore"; // Import store để cập nhật trạng thái người dùng
+import { useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import thêm useQueryClient
+import { loginUser as apiLoginUser } from "../api/auth";
+import { useUserStore } from "../store/useUserStore";
+import { toast } from "react-toastify";
 
 // Helper function để format avatar URL
 const formatAvatarUrl = (avatar) => {
-  if (!avatar) return "/default-avatar.png"; // Avatar mặc định nếu không có ảnh
-  return avatar.startsWith("http") ? avatar : `http://localhost:3001${avatar}`;
+  if (!avatar) {
+    return "/default-avatar.png";
+  }
+  if (avatar.startsWith("http")) {
+    return avatar;
+  }
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  return `${apiUrl}${avatar}`;
 };
 
+/**
+ * Hook xử lý logic đăng nhập sử dụng React Query.
+ */
 export const useLogin = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const setUser = useUserStore((state) => state.setUser);
+  const queryClient = useQueryClient(); // 2. Lấy queryClient từ hook
 
-  const setUser = useUserStore((state) => state.setUser); // Lấy function setUser từ store
-
-  const handleLogin = async ({ email, password }) => {
-    setError("");
-    setSuccessMessage("");
-
-    if (!email || !password) {
-      setError("Vui lòng nhập đầy đủ email và mật khẩu.");
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const data = await loginUser({ email, password });
-
-      // Đảm bảo avatar URL được xử lý chính xác
-      const userWithAvatar = {
+  const mutation = useMutation({
+    mutationFn: (credentials) => apiLoginUser(credentials),
+    onSuccess: (data) => {
+      const userWithFormattedAvatar = {
         ...data.user,
-        avatar: formatAvatarUrl(data.user.avatar), // Chỉnh sửa avatar nếu cần
+        avatar: formatAvatarUrl(data.user.avatar),
       };
 
-      // Lưu token và user đã xử lý avatar vào localStorage
       localStorage.setItem("token", data.accessToken);
-      localStorage.setItem("user", JSON.stringify(userWithAvatar));
+      localStorage.setItem("user", JSON.stringify(userWithFormattedAvatar));
+      setUser(userWithFormattedAvatar);
 
-      // Cập nhật trạng thái user trong Zustand store
-      setUser(userWithAvatar);
+      // 3. Vô hiệu hóa các query cũ sau khi đăng nhập thành công
+      // Điều này đảm bảo dữ liệu của người dùng mới sẽ được fetch lại.
+      // Bạn có thể chỉ định chính xác queryKey bạn dùng để fetch profile, ví dụ: ['profile']
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-      setSuccessMessage(data.message || "Đăng nhập thành công.");
-
-      return true;
-    } catch (err) {
+      toast.success(data.message || "Đăng nhập thành công!");
+    },
+    onError: (error) => {
       const errorMessage =
-        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+        error.response?.data?.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại.";
+      toast.error(errorMessage);
+    },
+  });
 
-  return { loading, error, successMessage, handleLogin };
+  return mutation;
 };

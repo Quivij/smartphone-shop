@@ -1,13 +1,10 @@
-const multer = require("multer");
 const express = require("express");
 const router = express.Router();
 const uploadAvatar = require("../middleware/uploadAvatar");
-const path = require("path");
 
 const {
   registerUser,
   loginUser,
-  getUserInfo,
   updateUser,
   deleteUser,
   getAllUsers,
@@ -17,59 +14,42 @@ const {
   getMyProfile,
   createUser,
   getAllUsersRaw,
+  changePassword,
 } = require("../controllers/userController");
 const { authMiddleware, isAdmin } = require("../middleware/authMiddleware");
 
-// Route kiểm tra trạng thái API
+// --- CÁC ROUTE CÔNG KHAI (Không cần xác thực) ---
 router.get("/status", (req, res) => {
   res.json({ message: "API đang hoạt động" });
 });
-
-// Định nghĩa API đăng ký
 router.post("/register", registerUser);
-
-// Định nghĩa API đăng nhập
 router.post("/login", loginUser);
-
-// Định nghĩa API refresh token
 router.post("/refresh", refreshToken);
+router.get("/all", getAllUsersRaw); // Lấy tất cả user (dữ liệu thô)
 
-// Đăng xuất
+// --- CÁC ROUTE CẦN XÁC THỰC ---
+// Middleware `authMiddleware` sẽ được áp dụng cho tất cả các route bên dưới
+router.use(authMiddleware);
+
+// Các route liên quan đến chính người dùng đang đăng nhập (self-actions)
 router.post("/logout", logoutUser);
-
-// Route lấy thông tin người dùng của chính mình
-router.get("/profile", authMiddleware, getMyProfile);
-
-// Route lấy tất cả người dùng (chỉ admin mới có quyền)
-router.get("/", authMiddleware, isAdmin, getAllUsers);
-
-// Route lấy thông tin chi tiết của một user (admin mới có quyền)
-router.get("/:userId", authMiddleware, isAdmin, getUserDetail);
-
-// Cập nhật thông tin người dùng (dành cho người dùng đăng nhập hoặc admin)
+router.get("/profile", getMyProfile);
 router.put(
   "/profile",
-  uploadAvatar.single("avatar"), // Đưa multer lên trước
-  authMiddleware,
+  uploadAvatar.single("avatar"), // Đặt sau authMiddleware trong trường hợp này là chấp nhận được vì nó thuộc group đã xác thực
   updateUser
 );
+router.put("/change-password", changePassword); // Đã di chuyển lên đây
+router.delete("/profile", deleteUser); // Gợi ý: Dùng /profile thay vì /delete cho nhất quán
 
-// Route admin cập nhật thông tin người dùng khác (Cập nhật bất kỳ user nào)
-router.put(
-  "/:id",
-  authMiddleware,
-  isAdmin,
-  uploadAvatar.single("avatar"),
-  updateUser
-);
+// --- CÁC ROUTE CHỈ DÀNH CHO ADMIN ---
+// Middleware `isAdmin` sẽ được áp dụng cho các route bên dưới
+router.use(isAdmin);
 
-// Xóa người dùng (Chỉ dành cho admin)
-router.delete("/:id", authMiddleware, isAdmin, deleteUser);
-
-// Xóa người dùng của chính mình (Dành cho người dùng đăng nhập)
-router.delete("/delete", authMiddleware, deleteUser);
-router.post("/", authMiddleware, isAdmin, createUser);
-// routes/userRoutes.js
-router.get("/all", getAllUsersRaw);
+router.get("/", getAllUsers); // Lấy danh sách người dùng có phân trang
+router.post("/", createUser); // Tạo người dùng mới
+router.get("/:userId", getUserDetail); // Lấy chi tiết user bất kỳ
+router.put("/:id", uploadAvatar.single("avatar"), updateUser); // Cập nhật user bất kỳ
+router.delete("/:id", deleteUser); // Xóa user bất kỳ
 
 module.exports = router;
