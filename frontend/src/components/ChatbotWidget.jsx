@@ -1,124 +1,156 @@
-import { useState, useEffect, useRef } from "react";
+// frontend/src/components/Chatbot.jsx
+import { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import "./ChatbotWidget.css";
 
-export default function ChatbotWidget() {
+function ChatbotWidget() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [sessionId, setSessionId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Khởi tạo sessionId
-  useEffect(() => {
-    let stored = localStorage.getItem("sessionId");
-    if (!stored) {
-      stored = crypto.randomUUID();
-      localStorage.setItem("sessionId", stored);
-    }
-    setSessionId(stored);
-  }, []);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  // Tự động cuộn xuống khi có tin nhắn mới
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
+  const sendMessage = async (e) => {
+    e?.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, { role: "user", text: input }];
+    setMessages(newMessages);
     setInput("");
+    setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/api/chatbot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, sessionId }),
+      const res = await axios.post("http://localhost:5001/api/chat", {
+        message: input,
       });
 
-      const data = await res.json();
-      const botMessage = { role: "bot", text: data.reply };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("❌ Gửi thất bại:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "⚠️ Lỗi máy chủ, vui lòng thử lại sau." },
+      setMessages([...newMessages, { role: "assistant", text: res.data.response }]);
+    } catch (err) {
+      console.error("API Error:", err);
+      setMessages([
+        ...newMessages,
+        {
+          role: "assistant",
+          text: "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
+        },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleBotClick = (text) => {
-    const match = text.match(/\/product\/([a-zA-Z0-9]+)/);
-    if (match) {
-      const productId = match[1];
-      window.location.href = `/product/${productId}`;
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
-      {/* Nút mở/đóng */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-8 h-8 text-white"
-          viewBox="0 0 512 512"
-          fill="currentColor"
+    <div className="chatbot-widget">
+      {!isOpen ? (
+        <button
+          className="chatbot-toggle"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open chat"
         >
-          <path d="M256.064 32C114.624 32 0 133.12 0 260.928c0 71.776 36.32 136.128 96.832 178.016v40.768c0 7.52 6.112 13.696 13.664 13.76a13.71 13.71 0 0 0 8.96-3.2l51.456-42.528c26.784 7.872 55.136 11.968 85.152 11.968 141.44 0 256-101.12 256-228.928C512 133.12 397.504 32 256.064 32zm14.464 281.6-60.064-64-134.912 64L224.064 174.4l60.064 64 134.944-64-148.544 139.2z" />
-        </svg>
-      </button>
-
-      {/* Hộp chat */}
-      {isOpen && (
-        <div className="w-96 h-[500px] bg-white rounded-2xl shadow-2xl p-4 flex flex-col mt-4">
-          <h2 className="text-lg font-semibold text-blue-600 mb-2">
-            🤖 Tư vấn sản phẩm
-          </h2>
-
-          <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`text-sm p-2 max-w-[80%] rounded-xl whitespace-pre-line break-words ${
-                  msg.role === "user"
-                    ? "bg-blue-100 self-end text-right"
-                    : "bg-gray-100 self-start cursor-pointer hover:bg-gray-200"
-                }`}
-                onClick={() =>
-                  msg.role === "bot" ? handleBotClick(msg.text) : null
-                }
-              >
-                {msg.text}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="flex">
-            <input
-              className="flex-1 border rounded-l-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhập câu hỏi về sản phẩm..."
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
+      ) : (
+        <div className="chatbot-container">
+          <div className="chatbot-header">
+            <h3>Trợ lý mua sắm</h3>
             <button
-              onClick={sendMessage}
-              className="bg-blue-500 text-white px-4 rounded-r-xl hover:bg-blue-600"
+              className="close-button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close chat"
             >
-              Gửi
+              ×
             </button>
           </div>
+          <div className="chatbot-messages">
+            {messages.length === 0 ? (
+              <div className="welcome-message">
+                <p>Xin chào! Tôi là trợ lý mua sắm điện thoại. Tôi có thể giúp bạn:</p>
+                <ul>
+                  <li>Tìm điện thoại theo thông số</li>
+                  <li>So sánh giá các mẫu điện thoại</li>
+                  <li>Tìm kiếm tính năng cụ thể</li>
+                  <li>Trả lời câu hỏi về điện thoại</li>
+                </ul>
+              </div>
+            ) : (
+              messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`message ${msg.role === "user" ? "user" : "assistant"}`}
+                >
+                  <div className="message-content">{msg.text}</div>
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="message assistant">
+                <div className="message-content">
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <form onSubmit={sendMessage} className="chatbot-input">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Nhập câu hỏi của bạn..."
+              rows={1}
+            />
+            <button type="submit" disabled={!input.trim() || isLoading}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </form>
         </div>
       )}
     </div>
   );
 }
+
+export default ChatbotWidget;
