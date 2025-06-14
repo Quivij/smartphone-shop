@@ -13,9 +13,12 @@ const addToCart = async (userId, productData) => {
   }
 
   let cart = await Cart.findOne({ userId });
+
   if (!cart) {
     cart = new Cart({ userId, items: [] });
   }
+
+  // const productIdObj = new mongoose.Types.ObjectId(productId); // 🔥 ÉP KIỂU TẠI ĐÂY
 
   const existingItem = cart.items.find(
     (item) =>

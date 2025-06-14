@@ -11,7 +11,12 @@ const getCart = async (req, res) => {
 
 const addToCart = async (req, res) => {
   try {
-    const cart = await cartService.addToCart(req.user.id, req.body);
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ message: "Không tìm thấy người dùng" });
+    }
+    console.log("🔥 req.user:", req.user); // ← log kiểm tra
+    const cart = await cartService.addToCart(userId, req.body);
     res.json(cart);
   } catch (err) {
     res.status(500).json({ message: "Lỗi thêm vào giỏ hàng", error: err.message });
