@@ -33,9 +33,9 @@ function ChatbotWidget() {
 
       const botReply = {
         role: "assistant",
-        text: res?.data?.response || "Không có phản hồi từ máy chủ.",
+        text: res?.data?.response?.text || "Không có phản hồi từ máy chủ.",
         timestamp: Date.now(),
-        product: res?.data?.product || null, // <-- Thêm thông tin sản phẩm nếu có
+        products: res?.data?.response?.products || [],
       };
 
       setMessages((prev) => [...prev, botReply]);
@@ -47,6 +47,7 @@ function ChatbotWidget() {
           role: "assistant",
           text: "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
           timestamp: Date.now(),
+          products: [],
         },
       ]);
     } finally {

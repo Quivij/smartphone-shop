@@ -180,7 +180,7 @@ const ProductDetail = () => {
               onClick={() => {
                 if (currentVariant) {
                   addToCart(product, currentVariant);
-                  window.location.href = "/checkout"; // hoặc dùng useNavigate nếu trong hook
+                  window.location.href = "/cart"; // hoặc dùng useNavigate nếu trong hook
                 }
               }}
             >

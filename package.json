@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "google-auth-library": "^9.15.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.4"
   }
 }

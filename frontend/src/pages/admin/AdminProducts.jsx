@@ -62,7 +62,6 @@ const AdminProduct = () => {
       toast.info("Không có dữ liệu sản phẩm để xuất");
       return;
     }
-
     const formattedProducts = products.flatMap((product) =>
       product.variants.map((variant) => ({
         "Tên sản phẩm": product.name,

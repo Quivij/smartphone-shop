@@ -25,12 +25,25 @@ connectDB();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost",
+  "http://localhost:80",
+  "http://localhost:5173",  // cho dev nếu cần
+  "http://127.0.0.1:80"
+];
 app.use(
   cors({
-    origin: "http://localhost:5173", // Frontend URL của bạn
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Các phương thức HTTP được phép
-    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"], // Các headers cho phép
-    credentials: true, // Cho phép gửi cookie kèm theo yêu cầu
+    origin: function (origin, callback) {
+      // Cho phép yêu cầu không có origin (ví dụ: curl, mobile app)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
+    credentials: true,
   })
 );
 app.use(

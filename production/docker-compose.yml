@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    expose:
+      - 3001
+    environment:
+      - MONGO_DB=mongodb+srv://thanhqui13204:bPa9Ugv20O96zsJW@data.wbte1zv.mongodb.net/?retryWrites=true&w=majority&appName=data
+      - URL_REACT_APP=http://localhost
+
+  chatbot:
+    build:
+      context: ../chatbot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"  # hoặc port bạn dùng
+    environment:
+      - PYTHONUNBUFFERED=1
+#docker-compose -p smartphone_shop up -d
+

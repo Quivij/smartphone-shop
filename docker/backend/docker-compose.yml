@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGO_DB=mongodb+srv://thanhqui13204:bPa9Ugv20O96zsJW@data.wbte1zv.mongodb.net/?retryWrites=true&w=majority&appName=data
+#docker-compose -p smartphone_backend up -d
