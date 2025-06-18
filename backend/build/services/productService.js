@@ -120,7 +120,7 @@ var ProductService = /*#__PURE__*/function () {
                 if (maxPrice) filter["variants.price"].$lte = Number(maxPrice);
               }
               _context2.n = 1;
-              return Product.find(filter).select("name brand category variants specifications createdAt updatedAt").skip((page - 1) * limit).limit(Number(limit));
+              return Product.find(filter).select("name brand category variants specifications sold createdAt updatedAt").skip((page - 1) * limit).limit(Number(limit));
             case 1:
               products = _context2.v;
               _context2.n = 2;

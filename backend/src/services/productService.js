@@ -70,7 +70,7 @@ class ProductService {
     }
 
     const products = await Product.find(filter)
-      .select("name brand category variants specifications createdAt updatedAt")
+      .select("name brand category variants specifications sold createdAt updatedAt")
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
