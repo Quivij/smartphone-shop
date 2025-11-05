@@ -161,14 +161,29 @@ class ProductService {
   }
 
   async addRating(productId, ratingData) {
-    const { rating, comment, userId } = ratingData;
+    const { rating, userId } = ratingData;
+  
     const product = await Product.findById(productId);
     if (!product) throw new Error("Product not found");
-
-    product.ratings.push({ userId, rating, comment });
-
+  
+    // Nếu người dùng đã đánh giá trước đó, cập nhật thay vì thêm mới
+    const existing = product.ratings.find(r => r.userId.toString() === userId);
+  
+    if (existing) {
+      existing.rating = rating;
+      existing.createdAt = Date.now();
+    } else {
+      product.ratings.push({ userId, rating }); // Không cần comment
+    }
+  
+    // Tính lại điểm trung bình
+    const total = product.ratings.reduce((sum, r) => sum + r.rating, 0);
+    product.averageRating = total / product.ratings.length;
+  
     return await product.save();
   }
+  
+
 
   async searchProducts(query) {
     const products = await Product.find({

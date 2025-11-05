@@ -1,14 +1,36 @@
-import React, { useEffect } from "react";
+// import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useOrderDetail } from "../hooks/useOrderDetail";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import api from "../api/api";
+import React, { useEffect, useState } from "react";
+import Rating from '@mui/material/Rating';
+import Box from '@mui/material/Box';
+import StarIcon from '@mui/icons-material/Star';
 
+const labels = {
+  0.5: 'Rất tệ',
+  1: 'Tệ',
+  1.5: 'Kém',
+  2: 'Không hài lòng',
+  2.5: 'Bình thường',
+  3: 'Tạm ổn',
+  3.5: 'Khá',
+  4: 'Tốt',
+  4.5: 'Rất tốt',
+  5: 'Xuất sắc',
+};
+function getLabelText(value) {
+  return `${value} Sao, ${labels[value]}`;
+}
 const OrderDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: order, isLoading, isError } = useOrderDetail(id);
+  const [value, setValue] = useState(0);
+  const [hover, setHover] = useState(-1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isError) {
@@ -31,6 +53,19 @@ const OrderDetailPage = () => {
       const errorMessage =
         err.response?.data?.message || err.message || "Không thể hủy đơn hàng";
       toast.error(errorMessage);
+    }
+  };
+
+  const handleSubmitRating = async (productId) => {
+    if (!value || value <= 0) return;
+    setIsSubmitting(true);
+    try {
+      await api.post(`/products/${productId}/rating`, { rating: value });
+      toast.success('Đánh giá thành công!');
+    } catch (err) {
+      toast.error('Gửi đánh giá thất bại!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -134,6 +169,32 @@ const OrderDetailPage = () => {
             <div className="text-sm text-gray-600">
               Giá: {item.price.toLocaleString()}₫ | Tổng:{" "}
               {(item.price * item.quantity).toLocaleString()}₫
+            </div>
+            {/* Đánh giá sản phẩm */}
+            <div className="mt-2 flex items-center gap-2">
+              <Rating
+                name={`hover-feedback-${item._id}`}
+                value={value}
+                precision={0.5}
+                getLabelText={getLabelText}
+                onChange={(event, newValue) => {
+                  setValue(newValue);
+                }}
+                onChangeActive={(event, newHover) => {
+                  setHover(newHover);
+                }}
+                emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+              />
+              {value !== null && (
+                <Box sx={{ ml: 2 }}>{labels[hover !== -1 ? hover : value]}</Box>
+              )}
+              <button
+                className={`ml-2 px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                onClick={() => handleSubmitRating(item.product?._id)}
+                disabled={isSubmitting || !value || value <= 0}
+              >
+                {isSubmitting ? 'Đang gửi...' : 'Đánh giá'}
+              </button>
             </div>
           </div>
         ))}

@@ -82,7 +82,6 @@ const loginUserService = async (email, password) => {
   }
 
   // 3. Nếu mọi thứ đều đúng, chỉ cần trả về user
-  // Việc tạo token sẽ do controller đảm nhiệm
   return user;
 };
 

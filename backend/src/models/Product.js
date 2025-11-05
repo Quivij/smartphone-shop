@@ -5,6 +5,8 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
 
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+
     slug: {
       type: String,
       unique: true,

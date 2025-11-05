@@ -3,8 +3,8 @@
 :root {
   --primary-color: #646cff;
   --primary-hover: #535bf2;
-  --bg-color: #242424;
-  --text-color: rgba(255, 255, 255, 0.87);
+  --bg-color: #ffffff; /* NỀN TRẮNG MẶC ĐỊNH */
+  --text-color: #213547; /* CHỮ MÀU TỐI */
   --light-bg: #ffffff;
   --dark-bg: #1a1a1a;
   --transition: all 0.3s ease-in-out;
@@ -13,16 +13,10 @@
   line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: var(--text-color);
   background-color: var(--bg-color);
-
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-color);
 }
 
-/* Body */
 body {
   margin: 0;
   display: flex;
@@ -31,10 +25,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #1e1e1e, #3a3a3a);
+  background: linear-gradient(135deg, #ffffff, #f5f5f5); /* đổi sang sáng */
   transition: var(--transition);
 }
-
 /* Links */
 a {
   font-weight: 500;
@@ -53,25 +46,26 @@ h1 {
   font-weight: 700;
   text-align: center;
   margin-bottom: 20px;
-  color: black;
+  color: var(--text-color);
 }
 
 /* Buttons */
 button {
   border-radius: 10px;
-  border: 2px solid transparent;
+  border: 1px solid #ddd;
   padding: 0.7em 1.5em;
   font-size: 1em;
   font-weight: 600;
-  background-color: var(--dark-bg);
-  color: white;
+  background-color: #f5f5f5; /* ✨ sáng hơn */
+  color: #222;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 button:hover {
   border-color: var(--primary-hover);
-  background-color: var(--primary-hover);
+  background-color: #e9e9e9;
   color: white;
 }
 button:focus,

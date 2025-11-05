@@ -22,7 +22,7 @@ async function verifyToken(token) {
     audience: clientId,
   });
   const payload = ticket.getPayload();
-  return payload;
+  return payload;ơ/ơ
 }
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -309,7 +309,7 @@ const createUser = async (req, res) => {
   try {
     const { name, email, password, phone, address, isAdmin } = req.body;
 
-    const newUser = await UserService.createUserService({
+    const newUser = await createUserService({
       name,
       email,
       password,

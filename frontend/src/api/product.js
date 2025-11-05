@@ -65,3 +65,12 @@ export const allProducts = async () => {
     throw error;
   }
 };
+export const raitingProduct = async (id, rating) => {
+  try {
+    const res = await api.post(`/products/${id}/rating`, { rating });
+    return res.data;
+  } catch (error) {
+    console.error(`Error rating product with id ${id}:`, error);
+    throw error;
+  }
+}

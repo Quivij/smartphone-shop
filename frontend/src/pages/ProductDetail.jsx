@@ -6,6 +6,9 @@ import ProductSlider from "../components/ProductSlider";
 import axios from "axios";
 import { useCartStore } from "../store/useCartStore";
 import { motion, AnimatePresence } from "framer-motion";
+import Rating from '@mui/material/Rating';
+import Box from '@mui/material/Box';
+import StarIcon from '@mui/icons-material/Star';
 
 const MotionImg = motion.img;
 
@@ -14,12 +17,31 @@ const fetchProductById = async (id) => {
   return res.data;
 };
 
+const labels = {
+  0.5: 'Rất tệ',
+  1: 'Tệ',
+  1.5: 'Kém',
+  2: 'Không hài lòng',
+  2.5: 'Bình thường',
+  3: 'Tạm ổn',
+  3.5: 'Khá',
+  4: 'Tốt',
+  4.5: 'Rất tốt',
+  5: 'Xuất sắc',
+};
+
+function getLabelText(value) {
+  return `${value} Sao, ${labels[value]}`;
+}
+
 const ProductDetail = () => {
   const { id } = useParams();
   const [selectedStorage, setSelectedStorage] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [value, setValue] = useState(0);
+  const [hover, setHover] = useState(-1);
 
   const {
     data: product,
@@ -126,6 +148,27 @@ const ProductDetail = () => {
             {product.name} Chính Hãng VN/A
           </h1>
 
+          {/* Đánh giá sản phẩm */}
+          <div className="mb-2 flex items-center">
+            <Rating
+              name="hover-feedback"
+              value={value}
+              precision={0.5}
+              getLabelText={getLabelText}
+              onChange={(event, newValue) => {
+                setValue(newValue);
+              }}
+              onChangeActive={(event, newHover) => {
+                setHover(newHover);
+              }}
+              sx={{ color: '#f5c518' }}
+              emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+            />
+            {value !== null && (
+              <Box sx={{ ml: 2 }}>{labels[hover !== -1 ? hover : value]}</Box>
+            )}
+          </div>
+
           <p className="text-gray-500 mb-1">Giá bán</p>
           <p className="text-3xl font-bold text-red-500 mb-4">
             {currentVariant?.price
@@ -188,7 +231,7 @@ const ProductDetail = () => {
             </button>
 
             <button
-              className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold"
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-bold shadow-sm"
               onClick={() => {
                 if (currentVariant) {
                   addToCart(product, currentVariant);

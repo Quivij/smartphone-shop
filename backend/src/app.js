@@ -14,6 +14,7 @@ const session = require("express-session");
 const cartRoutes = require("./routes/cartRoutes");
 const authRoutes = require("./routes/authRoutes");
 const path = require("path");
+const recommenderRoutes = require("./routes/recommendRoutes"); // Import routes cho recommender system
 
 // Load biến môi trường từ file .env
 dotenv.config();
@@ -68,7 +69,7 @@ app.use("/api/dashboard", dashboardRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/coupons", couponRoutes);
 app.use("/api/auth", authRoutes);
-
+app.use("/api/recommend", recommenderRoutes); // Route cho recommender system
 // Middleware xử lý lỗi
 app.use(errorHandler);
 
